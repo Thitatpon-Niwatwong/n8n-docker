@@ -96,16 +96,18 @@
         },
         {
             "parameters": {
-                "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const bin = item.binary?.data; \n\n  const directory = bin?.directory || \"\";\n  const fileName  = bin?.fileName  || \"\";\n\n  return {\n    json: {\n      fileName,\n      directory,\n      // full path \u0e23\u0e27\u0e21\u0e0a\u0e37\u0e48\u0e2d\u0e44\u0e1f\u0e25\u0e4c\u0e14\u0e49\u0e27\u0e22\n      path: directory\n        ? `${directory}/${fileName}`\n        : fileName\n    },\n    binary: item.binary   \n  };\n});\n"
+                "mode": "raw",
+                "jsonOutput": "={\n  \"fileName\": $binary.data.fileName,\n  \"directory\": $binary.data.directory,\n  \"path\": $binary.data.directory ? $binary.data.directory + '/' + $binary.data.fileName : $binary.data.fileName\n}",
+                "options": {}
             },
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
+            "id": "8f32caa7-4f54-4381-abbe-a6e40a3873c5",
+            "name": "Extract File Info",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
             "position": [
                 -1072,
                 272
-            ],
-            "id": "8f32caa7-4f54-4381-abbe-a6e40a3873c5",
-            "name": "Extract File Info"
+            ]
         },
         {
             "parameters": {
