@@ -220,7 +220,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst items = $input.all();\nconst out = [];\n\nconst THAI_DIGITS = \"๐๑๒๓๔๕๖๗๘๙\";\nfunction toWesternDigits(s) {\n  return String(s ?? \"\").replace(/[๐-๙]/g, d => String(THAI_DIGITS.indexOf(d)));\n}\n\nfunction cleanSpaces(s) {\n  return String(s ?? \"\")\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, \" \")\n    .replace(/[\\t\\r\\n]+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizeThaiAddress(raw) {\n  if (raw == null) return null;\n  let s = toWesternDigits(String(raw));\n  s = cleanSpaces(s);\n  s = s.replace(/จ\\.\\s*(\\d+)/g, \"หมู่ $1\");\n  s = s.replace(/หมู่บ้าน\\s*(\\d+)/g, \"หมู่ $1\");\n  s = s.replace(/จ\\.\\s*/g, \"จังหวัด \");\n  s = s.replace(/ต\\.\\s*/g, \"ตำบล \");\n  s = s.replace(/อ\\.\\s*/g, \"อำเภอ \");\n  s = s.replace(/ถ\\.\\s*/g, \"ถนน \");\n  s = s.replace(/[.,\\-]/g, \" \");\n  return cleanSpaces(s);\n}\n\nfunction isSubset(source, target) {\n  if (!source || !target) return false;\n  const sourceWords = source.split(\" \").filter(w => w.trim().length > 0);\n  const targetCombined = target.replace(/\\s+/g, \"\");\n  return sourceWords.every(word => targetCombined.includes(word));\n}\n\nfor (const item of items) {\n  const json = item.json;\n  \n  // Only check if RD lookup was successful\n  if (!json.rd_success) {\n    out.push({ json: { ...json, buyer_address_status: false, buyer_address_reason: \"RD Lookup Failed\" }, pairedItem: item.pairedItem });\n    continue;\n  }\n\n  const pdfAddr = normalizeThaiAddress(json.address_raw); // Input from PDF\n  const rdAddr = normalizeThaiAddress(json.rd_address_raw); // From RD API\n\n  let status = false;\n  let reason = \"Mismatch\";\n\n  if (pdfAddr && rdAddr) {\n    if (isSubset(pdfAddr, rdAddr) || isSubset(rdAddr, pdfAddr)) {\n      status = true;\n      reason = \"Match\";\n    }\n  } else {\n    reason = \"Missing Address Data\";\n  }\n\n  out.push({\n    json: {\n      ...json,\n      buyer_address_status: status,\n      buyer_address_reason: reason,\n      norm_pdf_address: pdfAddr,\n      norm_rd_address: rdAddr\n    },\n    pairedItem: item.pairedItem\n  });\n}\n\nreturn out;\n"
+        "jsCode": "\nconst items = $input.all();\nconst out = [];\n\nconst THAI_DIGITS = \"๐๑๒๓๔๕๖๗๘๙\";\nfunction toWesternDigits(s) {\n  return String(s ?? \"\").replace(/[๐-๙]/g, d => String(THAI_DIGITS.indexOf(d)));\n}\n\nfunction cleanSpaces(s) {\n  return String(s ?? \"\")\n    .replace(/[   -‍  　﻿]/g, \" \")\n    .replace(/[\t\r\n]+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizeThaiAddress(raw) {\n  if (raw == null) return null;\n  let s = toWesternDigits(String(raw));\n  s = cleanSpaces(s);\n  s = s.replace(/จ\\.\\s*(\\d+)/g, \"หมู่ $1\");\n  s = s.replace(/หมู่บ้าน\\s*(\\d+)/g, \"หมู่ $1\");\n  s = s.replace(/จ\\.\\s*/g, \"จังหวัด \");\n  s = s.replace(/ต\\.\\s*/g, \"ตำบล \");\n  s = s.replace(/อ\\.\\s*/g, \"อำเภอ \");\n  s = s.replace(/ถ\\.\\s*/g, \"ถนน \");\n  s = s.replace(/[.,\\-]/g, \" \");\n  return cleanSpaces(s);\n}\n\nfunction isSubset(source, target) {\n  if (!source || !target) return false;\n  const sourceWords = source.split(\" \").filter(w => w.trim().length > 0);\n  const targetCombined = target.replace(/\\s+/g, \"\");\n  return sourceWords.every(word => targetCombined.includes(word));\n}\n\nfor (const item of items) {\n  const json = item.json;\n  \n  // Case 1: RD Lookup Failed (Buyer VAT ID Not Found or Error)\n  if (!json.rd_success) {\n    out.push({\n      json: {\n        ...json,\n        buyer_vat_info_status: false, // Explicitly set to false\n        buyer_address_status: false,  // Cannot match address if ID not found\n        buyer_address_reason: \"RD Lookup Failed / VAT ID Not Found\"\n      },\n      pairedItem: item.pairedItem\n    });\n    continue;\n  }\n\n  // Case 2: RD Lookup Success, Compare Address\n  const pdfAddr = normalizeThaiAddress(json.address_raw); // Input from PDF\n  const rdAddr = normalizeThaiAddress(json.rd_address_raw); // From RD API\n\n  let status = false;\n  let reason = \"Mismatch\";\n\n  if (pdfAddr && rdAddr) {\n    if (isSubset(pdfAddr, rdAddr) || isSubset(rdAddr, pdfAddr)) {\n      status = true;\n      reason = \"Match\";\n    }\n  } else {\n    reason = \"Missing Address Data\";\n  }\n\n  out.push({\n    json: {\n      ...json,\n      buyer_vat_info_status: true, // Lookup succeeded\n      buyer_address_status: status,\n      buyer_address_reason: reason,\n      norm_pdf_address: pdfAddr,\n      norm_rd_address: rdAddr\n    },\n    pairedItem: item.pairedItem\n  });\n}\n\nreturn out;\n"
       },
       "id": "fd6abf75-28e8-41f4-86bf-b07110e1a40a",
       "name": "Compare Address (Buyer)",
@@ -279,7 +279,8 @@
           "mappingMode": "defineBelow",
           "value": {
             "invoice_number": "={{ $json.invoice_number }}",
-            "buyer_vat_info_status": "={{ true }}"
+            "buyer_vat_info_status": "={{ $json.buyer_vat_info_status }}",
+            "buyer_address_status": "={{ $json.buyer_address_status }}"
           },
           "matchingColumns": [
             "invoice_number"
@@ -522,8 +523,8 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "vendor_vat_id_info_status": "={{ true }}",
-            "invoice_number": "={{ $json.invoice_number }}"
+            "invoice_number": "={{ $json.invoice_number }}",
+            "vendor_vat_id_info_status": "={{ $json.rd_success }}"
           },
           "matchingColumns": [
             "invoice_number"
