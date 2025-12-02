@@ -1133,7 +1133,12 @@
                 "workflowId": "RDVATLookupConsolidated",
                 "workflowInputs": {
                     "mappingMode": "defineBelow",
-                    "value": {}
+                    "value": {
+                        "vat_id": "={{ $json.vendor_vat_id }}",
+                        "branch_id": "={{ $json.vendor_branch }}",
+                        "type": "vendor",
+                        "invoice_number": "={{ $json.invoice_number }}"
+                    }
                 },
                 "mode": "each",
                 "options": {
@@ -1679,7 +1684,13 @@
                 "workflowId": "RDVATLookupConsolidated",
                 "workflowInputs": {
                     "mappingMode": "defineBelow",
-                    "value": {},
+                    "value": {
+                        "vat_id": "={{ $json.buyer_vat_id }}",
+                        "branch_id": "={{ $json.buyer_branch }}",
+                        "type": "buyer",
+                        "invoice_number": "={{ $json.invoice_number }}",
+                        "address_raw": "={{ $json.buyer_address_raw }}"
+                    },
                     "matchingColumns": [],
                     "schema": [],
                     "attemptToConvertTypes": false,
