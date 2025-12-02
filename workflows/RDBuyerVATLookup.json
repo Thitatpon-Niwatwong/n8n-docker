@@ -1,0 +1,1192 @@
+{
+    "name":  "RD Buyer VAT Lookup",
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://rdws.rd.go.th/serviceRD3/vatserviceRD3.asmx",
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/soap+xml; charset=utf-8",
+                                         "body":  "=\u003csoap:Envelope\n    xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\"\n    xmlns:vat=\"https://rdws.rd.go.th/serviceRD3/vatserviceRD3\"\u003e\n\n  \u003csoap:Header/\u003e\n\n  \u003csoap:Body\u003e\n\n    \u003c!-- ===== ตรวจผู้ขาย (Vendor) ===== --\u003e\n    \u003cvat:Service\u003e\n      \u003cvat:TIN\u003e{{ $json.buyer_vat_id }}\u003c/vat:TIN\u003e\n      \u003cvat:ProvinceCode\u003e0\u003c/vat:ProvinceCode\u003e\n      \u003cvat:BranchNumber\u003e{{ $json.buyer_branch }}\u003c/vat:BranchNumber\u003e\n      \u003cvat:AmphurCode\u003e0\u003c/vat:AmphurCode\u003e\n    \u003c/vat:Service\u003e\n\n  \u003c/soap:Body\u003e\n\n\u003c/soap:Envelope\u003e\n",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.2,
+                      "position":  [
+                                       -2272,
+                                       -48
+                                   ],
+                      "id":  "f67d6e92-828a-41f1-9c18-c66f05ba7fad",
+                      "name":  "HTTP: RD VAT lookup (buyer)",
+                      "continueOnFail":  true
+                  },
+                  {
+                      "parameters":  {
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.xml",
+                      "typeVersion":  1,
+                      "position":  [
+                                       -2064,
+                                       -48
+                                   ],
+                      "id":  "c1080fef-b012-4e3c-9d1c-15f15aad1459",
+                      "name":  "XML to JSON (RD)",
+                      "continueOnFail":  true
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "// Normalize RD VAT SOAP response with error handling\nconst allItems = $input.all();\nconst data = Array.isArray(allItems[0]?.json) ? allItems[0].json : allItems.map(i =\u003e i.json ?? {});\n\nfunction clean(val) {\n  const x = String(val ?? \u0027\u0027).trim();\n  return x === \u0027-\u0027 ? \u0027\u0027 : x;\n}\n\nfunction getField(obj, field) {\n  const sr = obj?.[\"soap:Envelope\"]?.[\"soap:Body\"]?.ServiceResponse?.ServiceResult ?? {};\n  const v = sr[field];\n  if (v == null) return \u0027\u0027;\n  if (typeof v === \u0027string\u0027 || typeof v === \u0027number\u0027) return String(v);\n  if (v.anyType !== undefined) {\n    const a = v.anyType;\n    if (typeof a === \u0027string\u0027 || typeof a === \u0027number\u0027) return String(a);\n    if (a \u0026\u0026 typeof a._ !== \u0027undefined\u0027) return String(a._);\n  }\n  if (typeof v._ !== \u0027undefined\u0027) return String(v._);\n  return \u0027\u0027;\n}\n\nfunction parseError(obj) {\n  const sr = obj?.[\"soap:Envelope\"]?.[\"soap:Body\"]?.ServiceResponse?.ServiceResult ?? {};\n  return clean(sr.vmsgerr ?? obj.errorMessage ?? obj.error?.message ?? \u0027\u0027);\n}\n\nconst out = [];\n\ndata.forEach((item, index) =\u003e {\n  const errMsg = parseError(item);\n  const vatId = clean(getField(item, \u0027vNID\u0027));\n\n  const branchRaw = clean(getField(item, \u0027vBranchNumber\u0027));\n  const branchNumber = branchRaw === \u00270\u0027 || branchRaw === \u0027\u0027 ? \u002700000\u0027 : branchRaw.padStart(5, \u00270\u0027);\n  const branchLabel = branchNumber === \u002700000\u0027 ? \u0027????????????\u0027 : `???? ${branchNumber}`;\n\n  const titleName = clean(getField(item, \u0027vtitleName\u0027));\n  const companyNameMain = clean(getField(item, \u0027vName\u0027));\n\n  out.push({\n    json: {\n      vatId,\n      companyName: `${titleName} ${companyNameMain}`.trim(),\n      branch: {\n        branchNumber,\n        branchLabel,\n        branchName: clean(getField(item, \u0027vBranchName\u0027)),\n      },\n      address: {\n        houseNo: clean(getField(item, \u0027vHouseNumber\u0027)),\n        moo: clean(getField(item, \u0027vMooNumber\u0027)),\n        village: clean(getField(item, \u0027vVillageName\u0027)),\n        building: clean(getField(item, \u0027vBuildingName\u0027)),\n        floor: clean(getField(item, \u0027vFloorNumber\u0027)),\n        room: clean(getField(item, \u0027vRoomNumber\u0027)),\n        soi: clean(getField(item, \u0027vSoiName\u0027)),\n        street: clean(getField(item, \u0027vStreetName\u0027)),\n        subDistrict: clean(getField(item, \u0027vThambol\u0027)),\n        district: clean(getField(item, \u0027vAmphur\u0027)),\n        province: clean(getField(item, \u0027vProvince\u0027)),\n        postcode: clean(getField(item, \u0027vPostCode\u0027)),\n        yaek: clean(getField(item, \u0027vYaek\u0027)),\n      },\n      businessFirstDate: clean(getField(item, \u0027vBusinessFirstDate\u0027)),\n      errorMessage: errMsg,\n      success: Boolean(vatId \u0026\u0026 !errMsg),\n    },\n    pairedItem: { item: index },\n  });\n});\n\nreturn out;\n"
+                                     },
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       -1872,
+                                       -48
+                                   ],
+                      "id":  "06f0af7a-ad94-4341-80fd-3e1411935c2f",
+                      "name":  "Normalize RD response (buyer)"
+                  },
+                  {
+                      "parameters":  {
+                                         "mode":  "combine",
+                                         "combineBy":  "combineAll",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.merge",
+                      "typeVersion":  3.2,
+                      "position":  [
+                                       -1232,
+                                       160
+                                   ],
+                      "id":  "95cde4bd-a55a-4361-8dd4-7095c6514007",
+                      "name":  "Merge: caller + RD response"
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c9d6ce2b-df45-41bd-9c7d-a6dee8461a89",
+                                                                                   "leftValue":  "={{ $json.success === false }}",
+                                                                                   "rightValue":  "",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       -1024,
+                                       160
+                                   ],
+                      "id":  "57382c76-edab-4066-808e-8073f6988e52",
+                      "name":  "Branch: RD lookup failed",
+                      "alwaysOutputData":  false
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c9d6ce2b-df45-41bd-9c7d-a6dee8461a89",
+                                                                                   "leftValue":  "={{ $json.success }}",
+                                                                                   "rightValue":  "",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       -1440,
+                                       -48
+                                   ],
+                      "id":  "545977d9-6166-459f-a202-4d7d9d2a342f",
+                      "name":  "Branch: RD lookup success",
+                      "alwaysOutputData":  false
+                  },
+                  {
+                      "parameters":  {
+                                         "inputSource":  "passthrough"
+                                     },
+                      "type":  "n8n-nodes-base.executeWorkflowTrigger",
+                      "typeVersion":  1.1,
+                      "position":  [
+                                       -2512,
+                                       -48
+                                   ],
+                      "id":  "bea01b83-298e-44ac-9886-61c15e772f33",
+                      "name":  "Trigger: Called by workflow"
+                  },
+                  {
+                      "parameters":  {
+                                         "schema":  {
+                                                        "__rl":  true,
+                                                        "value":  "public",
+                                                        "mode":  "name"
+                                                    },
+                                         "table":  {
+                                                       "__rl":  true,
+                                                       "value":  "vat_companies",
+                                                       "mode":  "list",
+                                                       "cachedResultName":  "vat_companies"
+                                                   },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "vat_id":  "={{ $json.vatId }}",
+                                                                       "address":  "={{ $json.address_raw }}",
+                                                                       "company_name":  "={{ $json.companyName }}",
+                                                                       "branch":  "={{ $json.branch.branchNumber }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "id"
+                                                                             ],
+                                                         "schema":  [
+                                                                        {
+                                                                            "id":  "id",
+                                                                            "displayName":  "id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  true,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vat_id",
+                                                                            "displayName":  "vat_id",
+                                                                            "required":  true,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "company_name",
+                                                                            "displayName":  "company_name",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "branch",
+                                                                            "displayName":  "branch",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "address",
+                                                                            "displayName":  "address",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "created_at",
+                                                                            "displayName":  "created_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "dateTime",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "updated_at",
+                                                                            "displayName":  "updated_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "dateTime",
+                                                                            "canBeUsedToMatch":  true
+                                                                        }
+                                                                    ],
+                                                         "attemptToConvertTypes":  false,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+                                                         "skipOnConflict":  "={{ true }}"
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.6,
+                      "position":  [
+                                       -1248,
+                                       -400
+                                   ],
+                      "id":  "bee1243c-806f-4d8c-a274-4f48a0c952bc",
+                      "name":  "Upsert VAT company (buyer)",
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "59xvxQayjivgQ1fN",
+                                                           "name":  "Postgres account 3"
+                                                       }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "// n8n Code Node (JavaScript)\n\n// ดึงทุก item จาก input\nconst items = $input.all();\n\n/**\n * สร้างที่อยู่แบบข้อความยาว (raw address) จาก object address\n */\nfunction buildRawAddress(address) {\n  if (!address) return \"\";\n\n  const parts = [];\n\n  // เลขที่บ้าน\n  if (address.houseNo) parts.push(address.houseNo);\n\n  // หมู่\n  if (address.moo) parts.push(\"หมู่ \" + address.moo);\n\n  // หมู่บ้าน\n  if (address.village) parts.push(\"หมู่บ้าน\" + address.village);\n\n  // อาคาร / ชั้น / ห้อง\n  if (address.building) parts.push(\"อาคาร\" + address.building);\n  if (address.floor) parts.push(\"ชั้น \" + address.floor);\n  if (address.room) parts.push(\"ห้อง \" + address.room);\n\n  // ซอย / แยก / ถนน\n  if (address.soi) parts.push(\"ซอย\" + address.soi);\n  if (address.yaek) parts.push(\"แยก \" + address.yaek);\n  if (address.street) parts.push(\"ถนน\" + address.street);\n\n  // แขวง/เขต หรือ ต./อ. (ถ้าไม่ใช่กรุงเทพ)\n  const province = address.province || \"\";\n  const isBangkok = /กรุงเทพมหานคร/.test(province);\n\n  if (address.subDistrict) {\n    parts.push((isBangkok ? \"แขวง \" : \"ต.\") + address.subDistrict);\n  }\n\n  if (address.district) {\n    parts.push((isBangkok ? \"เขต \" : \"อ.\") + address.district);\n  }\n\n  // จังหวัด\n  if (province) {\n    if (isBangkok) {\n      // กรุงเทพมหานคร ไม่ต้องใส่ \"จ.\"\n      parts.push(province);\n    } else {\n      // จังหวัดทั่วไป → เติม \"จ.\"\n      parts.push(\"จ.\" + province);\n    }\n  }\n\n  // รหัสไปรษณีย์\n  if (address.postcode) parts.push(address.postcode);\n\n  // join และเก็บช่องว่างให้เรียบร้อย\n  return parts.join(\" \").replace(/\\s+/g, \" \").trim();\n}\n\n// แปลงทุก item แล้วเพิ่ม field address_raw\nreturn items.map(item =\u003e {\n  const data = item.json;\n  const address = data.address || null;\n\n  const raw = buildRawAddress(address);\n\n  return {\n    json: {\n      ...data,\n      address_raw: raw,  // 👉 ที่อยู่แบบ raw address พร้อม \"จ.จังหวัด\"\n    },\n  };\n});\n"
+                                     },
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       -1648,
+                                       -48
+                                   ],
+                      "id":  "1f786dee-4840-48ee-ad96-537ee6fd30c3",
+                      "name":  "Build RD address_raw"
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "update",
+                                         "schema":  {
+                                                        "__rl":  true,
+                                                        "value":  "={{ $json.schema }}",
+                                                        "mode":  "name"
+                                                    },
+                                         "table":  {
+                                                       "__rl":  true,
+                                                       "value":  "invoice_check_summary",
+                                                       "mode":  "list",
+                                                       "cachedResultName":  "invoice_check_summary"
+                                                   },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "buyer_vat_info_status":  "={{ true }}",
+                                                                       "invoice_number":  "={{ $json.invoice_number }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "invoice_number"
+                                                                             ],
+                                                         "schema":  [
+                                                                        {
+                                                                            "id":  "id",
+                                                                            "displayName":  "id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  true,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_id",
+                                                                            "displayName":  "invoice_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number",
+                                                                            "displayName":  "invoice_number",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id",
+                                                                            "displayName":  "vendor_vat_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch",
+                                                                            "displayName":  "vendor_branch",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_status",
+                                                                            "displayName":  "invoice_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "buyer_vat_info_status",
+                                                                            "displayName":  "buyer_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number_status",
+                                                                            "displayName":  "invoice_number_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "date_raw_status",
+                                                                            "displayName":  "date_raw_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_name_status",
+                                                                            "displayName":  "vendor_name_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id_status",
+                                                                            "displayName":  "vendor_vat_id_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_info_status",
+                                                                            "displayName":  "vendor_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch_status",
+                                                                            "displayName":  "vendor_branch_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "net_amount_status",
+                                                                            "displayName":  "net_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vat_amount_status",
+                                                                            "displayName":  "vat_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "grand_total_status",
+                                                                            "displayName":  "grand_total_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "all_ok",
+                                                                            "displayName":  "all_ok",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "updated_at",
+                                                                            "displayName":  "updated_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "dateTime",
+                                                                            "canBeUsedToMatch":  true
+                                                                        }
+                                                                    ],
+                                                         "attemptToConvertTypes":  false,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.6,
+                      "position":  [
+                                       -672,
+                                       -272
+                                   ],
+                      "id":  "3b0a3022-80ab-424e-9181-0f8ff8a103f9",
+                      "name":  "Mark buyer_vat_info_status=true",
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "59xvxQayjivgQ1fN",
+                                                           "name":  "Postgres account 3"
+                                                       }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "update",
+                                         "schema":  {
+                                                        "__rl":  true,
+                                                        "value":  "={{ $json.schema }}",
+                                                        "mode":  "name"
+                                                    },
+                                         "table":  {
+                                                       "__rl":  true,
+                                                       "value":  "invoice_check_summary",
+                                                       "mode":  "list",
+                                                       "cachedResultName":  "invoice_check_summary"
+                                                   },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "buyer_vat_info_status":  "={{ false }}",
+                                                                       "invoice_number":  "={{ $json.invoice_number }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "invoice_number"
+                                                                             ],
+                                                         "schema":  [
+                                                                        {
+                                                                            "id":  "id",
+                                                                            "displayName":  "id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  true,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_id",
+                                                                            "displayName":  "invoice_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number",
+                                                                            "displayName":  "invoice_number",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id",
+                                                                            "displayName":  "vendor_vat_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch",
+                                                                            "displayName":  "vendor_branch",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_status",
+                                                                            "displayName":  "invoice_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "buyer_vat_info_status",
+                                                                            "displayName":  "buyer_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number_status",
+                                                                            "displayName":  "invoice_number_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "date_raw_status",
+                                                                            "displayName":  "date_raw_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_name_status",
+                                                                            "displayName":  "vendor_name_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id_status",
+                                                                            "displayName":  "vendor_vat_id_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_info_status",
+                                                                            "displayName":  "vendor_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch_status",
+                                                                            "displayName":  "vendor_branch_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "net_amount_status",
+                                                                            "displayName":  "net_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vat_amount_status",
+                                                                            "displayName":  "vat_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "grand_total_status",
+                                                                            "displayName":  "grand_total_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "all_ok",
+                                                                            "displayName":  "all_ok",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "updated_at",
+                                                                            "displayName":  "updated_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "dateTime",
+                                                                            "canBeUsedToMatch":  true
+                                                                        }
+                                                                    ],
+                                                         "attemptToConvertTypes":  false,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.6,
+                      "position":  [
+                                       -768,
+                                       192
+                                   ],
+                      "id":  "9c9476c7-b28e-45df-b35d-ffa9212b7aad",
+                      "name":  "Mark buyer_vat_info_status=false",
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "59xvxQayjivgQ1fN",
+                                                           "name":  "Postgres account 3"
+                                                       }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const items = $input.all();\n\n// ===== Helpers =====\n\n// ?????????? ? ??????\nconst THAI_DIGITS = \"??????????\";\nfunction toWesternDigits(s) {\n  return String(s ?? \"\").replace(/[?-?]/g, d =\u003e String(THAI_DIGITS.indexOf(d)));\n}\n\n// ???????????????? ?\nfunction cleanSpaces(s) {\n  return String(s ?? \"\")\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, \" \")\n    .replace(/[\\t\\r\\n]+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\n// normalize ?????????? (???????????????????????)\nfunction normalizeThaiAddress(raw) {\n  if (raw == null) return null;\n\n  let s = toWesternDigits(String(raw));\n  s = cleanSpaces(s);\n\n  // --- ?????????????????????????????? ---\n  s = s.replace(/?\\.\\s*(\\d+)/g, \"???? $1\");\n  s = s.replace(/???????\\s*(\\d+)/g, \"???? $1\");\n\n  s = s.replace(/?\\.\\s*/g, \"???? \");\n  s = s.replace(/?\\.\\s*/g, \"????? \");\n  s = s.replace(/?\\.\\s*/g, \"??????? \");\n  s = s.replace(/?\\.\\s*/g, \"??? \");\n\n  // ????? , - ???????????????? ? ??????????????????\n  s = s.replace(/[.,\\-]/g, \" \");\n  \n  s = cleanSpaces(s);\n  return s;\n}\n\n// ???????????????? Subset (???? A ??????? ???????? B ???????)\nfunction isSubset(sourceString, targetString) {\n  if (!sourceString || !targetString) return false;\n\n  // ??? Source ???????\n  const sourceWords = sourceString.split(\" \").filter(w =\u003e w.trim().length \u003e 0);\n  \n  // ?? Target ???????????? (????????????????????????????????????)\n  const targetCombined = targetString.replace(/\\s+/g, \"\");\n\n  // ?????????????? Source ??????? Target (Combined)\n  return sourceWords.every(word =\u003e targetCombined.includes(word));\n}\n\n// ===== Main =====\n\nconst pdfItem = items.find(it =\u003e it.json \u0026\u0026 it.json.buyer_address_raw !== undefined);\nconst apiItem = items.find(it =\u003e it.json \u0026\u0026 (it.json.address_raw !== undefined || it.json.address));\n\nif (!pdfItem || !apiItem) {\n  return items.map(it =\u003e ({\n    json: {\n      ...it.json,\n      buyer_address_status: null,\n      norm_buyer_address: null,\n      norm_api_address: null,\n    },\n  }));\n}\n\nconst pdf = pdfItem.json;\nconst api = apiItem.json;\n\n// ???????? VAT API ????????? ?????????????? error ?????? (????????????????)\nif (api.success === false) {\n  return [{\n    json: {\n      ...pdf,\n      vat_api_error: api.errorMessage || \"\",\n      vat_api_vatId: api.vatId,\n      vat_api_companyName: api.companyName,\n      vat_api_branchNumber: api.branch?.branchNumber,\n      vat_api_branchLabel: api.branch?.branchLabel,\n      vat_api_address_raw: null,\n      norm_buyer_address: null,\n      norm_api_address: null,\n      buyer_address_status: null,\n    },\n  }];\n}\n\n// 1) ?????????? PDF\nconst buyerAddr = pdf.buyer_address_raw;\n\n// 2) ?????????? API (???????????????????)\nlet apiAddr = api.address_raw;\nif (!apiAddr \u0026\u0026 api.address) {\n  const a = api.address;\n  const parts = [];\n  if (a.houseNo) parts.push(a.houseNo);\n  if (a.moo) parts.push(`???? ${a.moo}`);\n  if (a.subDistrict) parts.push(`????${a.subDistrict}`);\n  if (a.district) parts.push(`?????${a.district}`);\n  if (a.province) parts.push(a.province);\n  if (a.postcode) parts.push(a.postcode);\n  apiAddr = parts.join(\" \");\n}\n\n// Normalize ???????????\nconst normBuyer = normalizeThaiAddress(buyerAddr);\nconst normApi   = normalizeThaiAddress(apiAddr);\n\n// --- Logic ????: Bidirectional Check (???? 2 ???) ---\nlet buyer_address_status = false;\n\nif (normBuyer \u0026\u0026 normApi) {\n  // ?????????? 1: ???? PDF ???? API ???????\n  const pdfInApi = isSubset(normBuyer, normApi);\n  \n  // ?????????? 2: ???? API ???? PDF ???????\n  const apiInPdf = isSubset(normApi, normBuyer);\n\n  // ???????????????????? ??????????\n  buyer_address_status = pdfInApi || apiInPdf;\n}\n\n// ??????\nreturn [\n  {\n    json: {\n      ...pdf,\n      vat_api_vatId: api.vatId,\n      vat_api_companyName: api.companyName,\n      vat_api_branchNumber: api.branch?.branchNumber,\n      vat_api_branchLabel: api.branch?.branchLabel,\n      vat_api_address_raw: apiAddr,\n\n      norm_buyer_address: normBuyer,\n      norm_api_address: normApi,\n\n      buyer_address_status, \n    },\n  },\n];\n"
+                                     },
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       -1072,
+                                       -144
+                                   ],
+                      "id":  "7eeae83c-fffb-4204-8ecb-fdf7e4d1dc43",
+                      "name":  "Compare buyer address vs RD"
+                  },
+                  {
+                      "parameters":  {
+
+                                     },
+                      "type":  "n8n-nodes-base.merge",
+                      "typeVersion":  3.2,
+                      "position":  [
+                                       -1248,
+                                       -144
+                                   ],
+                      "id":  "8735be7b-beb2-4fb8-9b54-295af3ff78dc",
+                      "name":  "Merge: success payload + caller"
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "32cc013f-bd67-4445-835b-9a5bfb8a62de",
+                                                                                   "leftValue":  "={{ $json.buyer_address_status }}",
+                                                                                   "rightValue":  "",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       -880,
+                                       -144
+                                   ],
+                      "id":  "0d7c9641-e28f-4fd3-b367-21d8c75ab5cf",
+                      "name":  "Branch: buyer address matches"
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "update",
+                                         "schema":  {
+                                                        "__rl":  true,
+                                                        "value":  "={{ $json.schema }}",
+                                                        "mode":  "name"
+                                                    },
+                                         "table":  {
+                                                       "__rl":  true,
+                                                       "value":  "invoice_check_summary",
+                                                       "mode":  "list",
+                                                       "cachedResultName":  "invoice_check_summary"
+                                                   },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "buyer_vat_info_status":  "={{ false }}",
+                                                                       "invoice_number":  "={{ $json.invoice_number }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "invoice_number"
+                                                                             ],
+                                                         "schema":  [
+                                                                        {
+                                                                            "id":  "id",
+                                                                            "displayName":  "id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  true,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_id",
+                                                                            "displayName":  "invoice_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number",
+                                                                            "displayName":  "invoice_number",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id",
+                                                                            "displayName":  "vendor_vat_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch",
+                                                                            "displayName":  "vendor_branch",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_status",
+                                                                            "displayName":  "invoice_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "buyer_vat_info_status",
+                                                                            "displayName":  "buyer_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "invoice_number_status",
+                                                                            "displayName":  "invoice_number_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "date_raw_status",
+                                                                            "displayName":  "date_raw_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_name_status",
+                                                                            "displayName":  "vendor_name_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_id_status",
+                                                                            "displayName":  "vendor_vat_id_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_vat_info_status",
+                                                                            "displayName":  "vendor_vat_info_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vendor_branch_status",
+                                                                            "displayName":  "vendor_branch_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "net_amount_status",
+                                                                            "displayName":  "net_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "vat_amount_status",
+                                                                            "displayName":  "vat_amount_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "grand_total_status",
+                                                                            "displayName":  "grand_total_status",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "all_ok",
+                                                                            "displayName":  "all_ok",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "boolean",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  true
+                                                                        },
+                                                                        {
+                                                                            "id":  "updated_at",
+                                                                            "displayName":  "updated_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "dateTime",
+                                                                            "canBeUsedToMatch":  true
+                                                                        }
+                                                                    ],
+                                                         "attemptToConvertTypes":  false,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.6,
+                      "position":  [
+                                       -672,
+                                       -48
+                                   ],
+                      "id":  "1e3715be-e5e4-48eb-95d4-bbbe0fde7d03",
+                      "name":  "Mark buyer_address_status=false",
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "59xvxQayjivgQ1fN",
+                                                           "name":  "Postgres account 3"
+                                                       }
+                                      }
+                  }
+              ],
+    "connections":  {
+                        "VAT INFO1":  {
+                                          "main":  [
+                                                       [
+                                                           {
+                                                               "node":  "XML to JSON1",
+                                                               "type":  "main",
+                                                               "index":  0
+                                                           }
+                                                       ]
+                                                   ]
+                                      },
+                        "XML to JSON1":  {
+                                             "main":  [
+                                                          [
+                                                              {
+                                                                  "node":  "Norm: JSON1",
+                                                                  "type":  "main",
+                                                                  "index":  0
+                                                              }
+                                                          ]
+                                                      ]
+                                         },
+                        "Norm: JSON1":  {
+                                            "main":  [
+                                                         [
+                                                             {
+                                                                 "node":  "Code in JavaScript",
+                                                                 "type":  "main",
+                                                                 "index":  0
+                                                             }
+                                                         ]
+                                                     ]
+                                        },
+                        "Merge2":  {
+                                       "main":  [
+                                                    [
+                                                        {
+                                                            "node":  "If",
+                                                            "type":  "main",
+                                                            "index":  0
+                                                        }
+                                                    ]
+                                                ]
+                                   },
+                        "If":  {
+                                   "main":  [
+                                                [
+                                                    {
+                                                        "node":  "Update rows in a table",
+                                                        "type":  "main",
+                                                        "index":  0
+                                                    }
+                                                ],
+                                                [
+
+                                                ]
+                                            ]
+                               },
+                        "If found vat info2":  {
+                                                   "main":  [
+                                                                [
+                                                                    {
+                                                                        "node":  "Merge",
+                                                                        "type":  "main",
+                                                                        "index":  1
+                                                                    },
+                                                                    {
+                                                                        "node":  "Insert rows in a table",
+                                                                        "type":  "main",
+                                                                        "index":  0
+                                                                    }
+                                                                ],
+                                                                [
+                                                                    {
+                                                                        "node":  "Merge2",
+                                                                        "type":  "main",
+                                                                        "index":  0
+                                                                    }
+                                                                ]
+                                                            ]
+                                               },
+                        "When Executed by Another Workflow":  {
+                                                                  "main":  [
+                                                                               [
+                                                                                   {
+                                                                                       "node":  "Merge2",
+                                                                                       "type":  "main",
+                                                                                       "index":  1
+                                                                                   },
+                                                                                   {
+                                                                                       "node":  "VAT INFO1",
+                                                                                       "type":  "main",
+                                                                                       "index":  0
+                                                                                   },
+                                                                                   {
+                                                                                       "node":  "Merge",
+                                                                                       "type":  "main",
+                                                                                       "index":  0
+                                                                                   }
+                                                                               ]
+                                                                           ]
+                                                              },
+                        "Code in JavaScript":  {
+                                                   "main":  [
+                                                                [
+                                                                    {
+                                                                        "node":  "If found vat info2",
+                                                                        "type":  "main",
+                                                                        "index":  0
+                                                                    }
+                                                                ]
+                                                            ]
+                                               },
+                        "Code in JavaScript1":  {
+                                                    "main":  [
+                                                                 [
+                                                                     {
+                                                                         "node":  "If1",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ]
+                                                             ]
+                                                },
+                        "Merge":  {
+                                      "main":  [
+                                                   [
+                                                       {
+                                                           "node":  "Code in JavaScript1",
+                                                           "type":  "main",
+                                                           "index":  0
+                                                       }
+                                                   ]
+                                               ]
+                                  },
+                        "If1":  {
+                                    "main":  [
+                                                 [
+                                                     {
+                                                         "node":  "Update rows in a table6",
+                                                         "type":  "main",
+                                                         "index":  0
+                                                     }
+                                                 ],
+                                                 [
+                                                     {
+                                                         "node":  "Update rows in a table7",
+                                                         "type":  "main",
+                                                         "index":  0
+                                                     }
+                                                 ]
+                                             ]
+                                }
+                    },
+    "active":  false,
+    "settings":  {
+                     "executionOrder":  "v1",
+                     "callerPolicy":  "workflowsFromSameOwner",
+                     "availableInMCP":  false,
+                     "errorWorkflow":  "diOAConKTESzIqzi"
+                 },
+    "versionId":  "d69485a4-2ef4-4fee-aa7f-d2157e5d0ed5",
+    "meta":  {
+                 "instanceId":  "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
+             },
+    "id":  "rSF9qHXCIEXaHRo0",
+    "tags":  [
+
+             ]
+}
