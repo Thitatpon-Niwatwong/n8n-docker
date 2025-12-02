@@ -10,9 +10,13 @@ loki/chunks/
 loki/compactor/
 loki/rules/
 loki/wal/
-grafana/
-!grafana/provisioning/
-!grafana/dashboards/
+# Grafana
+grafana/grafana.db
+grafana/plugins/
+grafana/png/
+grafana/csv/
+grafana/pdf/
+grafana/sessions/
 pgadmin/
 n8n-data/
 n8n-files/
@@ -23,3 +27,9 @@ Thumbs.db
 
 # Python
 __pycache__/
+
+# Prometheus
+prometheus/data/
+
+# Logs
+*.log
