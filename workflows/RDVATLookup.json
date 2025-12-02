@@ -747,6 +747,38 @@
           "name": "Postgres account 3"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.rd_success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-rd-success-node-id",
+      "name": "Check RD Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1300,
+        -64
+      ]
     }
   ],
   "pinData": {
@@ -853,11 +885,6 @@
       "main": [
         [
           {
-            "node": "Upsert VAT Company",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Merge",
             "type": "main",
             "index": 1
@@ -869,6 +896,11 @@
           },
           {
             "node": "Switch Type",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check RD Success",
             "type": "main",
             "index": 0
           }
@@ -929,6 +961,18 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Check RD Success": {
+      "main": [
+        [
+          {
+            "node": "Upsert VAT Company",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
