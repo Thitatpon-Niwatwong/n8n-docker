@@ -10,10 +10,10 @@ services:
       - N8N_METRICS=true
       - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true
       - N8N_LOG_OUTPUT=console
-      - TZ=Asia/Bangkok
+      - TZ=${TIMEZONE}
     volumes:
-      - n8n_data:/home/node/.n8n
-      - C:/Users/thita/n8n-files:/files
+      - ./n8n-data:/home/node/.n8n
+      - ./n8n-files:/files
     restart: always
     depends_on:
       - postgres
@@ -22,27 +22,27 @@ services:
     image: postgres:16
     container_name: postgres
     environment:
-      POSTGRES_USER: customuser
-      POSTGRES_PASSWORD: custompass
-      POSTGRES_DB: customdb
-      TZ: Asia/Bangkok
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TIMEZONE}
     ports:
       - "5432:5432"
     volumes:
-      - C:/Users/thita/docker/postgres/data:/var/lib/postgresql/data
+      - ./postgres/data:/var/lib/postgresql/data
     restart: always
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      TZ: Asia/Bangkok
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      TZ: ${TIMEZONE}
     ports:
       - "5050:80"
     volumes:
-      - C:/Users/thita/docker/pgadmin:/var/lib/pgadmin
+      - ./pgadmin:/var/lib/pgadmin
     depends_on:
       - postgres
     restart: always
@@ -53,7 +53,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - C:/Users/thita/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     restart: always
 
   grafana:
@@ -62,9 +62,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - C:/Users/thita/docker/grafana:/var/lib/grafana
+      - ./grafana:/var/lib/grafana
     environment:
-      - TZ=Asia/Bangkok
+      - TZ=${TIMEZONE}
     restart: always
 
   loki:
@@ -74,15 +74,15 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - C:/Users/thita/docker/loki/config.yml:/etc/loki/config.yml
-      - C:/Users/thita/docker/loki/data:/loki
+      - ./loki/config.yml:/etc/loki/config.yml
+      - ./loki/data:/loki
     restart: always
 
   promtail:
     image: grafana/promtail:2.9.0
     container_name: promtail
     volumes:
-      - C:/Users/thita/docker/promtail:/etc/promtail
+      - ./promtail:/etc/promtail
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: -config.file=/etc/promtail/config.yml
@@ -90,6 +90,4 @@ services:
     depends_on:
       - loki
 
-volumes:
-  n8n_data:
-    external: true
+

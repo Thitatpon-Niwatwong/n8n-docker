@@ -1,0 +1,14 @@
+# Secrets
+**/.env
+
+# Data Directories
+postgres/data/
+loki/data/
+grafana/
+pgadmin/
+n8n-data/
+n8n-files/
+
+# System
+.DS_Store
+Thumbs.db
