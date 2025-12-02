@@ -11,6 +11,8 @@ loki/compactor/
 loki/rules/
 loki/wal/
 grafana/
+!grafana/provisioning/
+!grafana/dashboards/
 pgadmin/
 n8n-data/
 n8n-files/
