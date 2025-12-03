@@ -1,1 +1,2 @@
 workflows/*.json filter=n8n-clean
+* text=auto eol=lf

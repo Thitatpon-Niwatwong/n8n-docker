@@ -11,13 +11,19 @@ services:
       - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true
       - N8N_LOG_OUTPUT=console
       - TZ=${TIMEZONE}
+      # - DB_TYPE=postgresdb
+      # - DB_POSTGRESDB_HOST=postgres
+      # - DB_POSTGRESDB_PORT=5432
+      # - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      # - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      # - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./n8n-data:/home/node/.n8n
       - ./n8n-files:/files
       - ./workflows:/workflows
     restart: always
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
     logging:
       driver: "json-file"
       options:

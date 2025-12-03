@@ -42,6 +42,13 @@ This repository contains a Docker Compose setup for n8n, complete with PostgreSQ
     docker-compose down
     ```
 
+4.  **Initial Setup (Import Workflows):**
+    After the containers are running, run the setup script to create your admin account and import the workflows:
+    ```bash
+    ./setup.sh
+    ```
+    *Follow the on-screen prompts to set up your email and password.*
+
 ## Accessing Services
 
 - **n8n:** [http://localhost:5678](http://localhost:5678)
