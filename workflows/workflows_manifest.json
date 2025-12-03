@@ -21,6 +21,6 @@
   },
   {
     "name": "System Updater",
-    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/System_Updater.json"
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/SystemUpdater.json"
   }
 ]
