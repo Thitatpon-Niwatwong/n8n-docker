@@ -1,10 +1,26 @@
 [
   {
-    "name": "Exact Name of Workflow 1",
-    "url": "https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/workflows/workflow_1.json"
+    "name": "Compare",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/Compare.json"
   },
   {
-    "name": "Exact Name of Workflow 2",
-    "url": "https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/workflows/workflow_2.json"
+    "name": "Global Error Handler",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/GlobalErrorHandler.json"
+  },
+  {
+    "name": "Insert",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/Insert.json"
+  },
+  {
+    "name": "Parallel Sub Workflow",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/ParallelSubWorkflow.json"
+  },
+  {
+    "name": "RD VAT Lookup",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/RDVATLookup.json"
+  },
+  {
+    "name": "System Updater",
+    "url": "https://raw.githubusercontent.com/NovitechPee/bmu-n8n/develop/workflows/System_Updater.json"
   }
 ]
