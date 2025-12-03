@@ -66,15 +66,35 @@
       "name": "Check Completion"
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mZffE3wZjSPvaiRf",
+          "mode": "list",
+          "cachedResultName": "Compare"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "body": {
+              "schema": "={{ $('Start').first().json.directory }}"
+            }
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [
         2400,
         0
       ],
-      "id": "all-done-node",
-      "name": "All Done"
+      "id": "execute-compare-node",
+      "name": "Trigger Compare Workflow"
     },
     {
       "parameters": {
@@ -2941,7 +2961,7 @@
       "main": [
         [
           {
-            "node": "All Done",
+            "node": "Trigger Compare Workflow",
             "type": "main",
             "index": 0
           }
