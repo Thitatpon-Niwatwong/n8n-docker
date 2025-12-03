@@ -9,10 +9,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -624,
-        -96
+        -800,
+        400
       ],
-      "id": "99d71cad-8f2f-4ffa-b4f0-47731a3470da",
+      "id": "846b86f2-ed0f-4e9f-9412-e90dcef5bd93",
       "name": "Read/Write Files from Disk",
       "alwaysOutputData": false
     },
@@ -43,11 +43,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        416,
-        192
+        528,
+        576
       ],
       "name": "Call My Sub-workflow",
-      "id": "ee529c35-039d-4355-bdc6-c4276b84c11a",
+      "id": "b83f7072-afcc-4bcf-98c3-ac3340ab202b",
       "alwaysOutputData": false
     },
     {
@@ -57,31 +57,17 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        64,
-        192
+        288,
+        560
       ],
-      "id": "6575ba04-91b6-402d-adb2-b05cc0aa2fd3",
+      "id": "839e5cf8-f3b2-4ee7-9cd1-05754bf54365",
       "name": "Loop Over Items"
-    },
-    {
-      "parameters": {
-        "amount": 3
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        240,
-        192
-      ],
-      "id": "34a8babb-a70b-4fa8-82ec-d091902252a1",
-      "name": "Wait",
-      "webhookId": "7a68008a-d8de-421f-8bcd-e95cfb2162cc"
     },
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "insert",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {
           "rawBody": "={{ true }}"
         }
@@ -89,10 +75,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -800,
-        -96
+        -976,
+        400
       ],
-      "id": "6d0fd8f6-25cc-494e-85f1-607f2799f8f1",
+      "id": "8ffcaf5e-da0f-4fbb-aae5-f75e78a5a42a",
       "name": "Webhook",
       "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
     },
@@ -103,10 +89,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -448,
-        -96
+        -624,
+        400
       ],
-      "id": "f5e3107e-cc7d-468d-9ca0-13ac4e46a764",
+      "id": "c931e7a5-def5-4a4b-89d5-1f324f464313",
       "name": "Extract File Info"
     },
     {
@@ -116,10 +102,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -240,
-        -96
+        -416,
+        400
       ],
-      "id": "747001fe-bcd4-468c-b74d-7e37dd24ed42",
+      "id": "4f8b73ef-bb78-4664-83a8-09528ca90040",
       "name": "Hash Schema Name"
     },
     {
@@ -129,15 +115,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -100,
-        100
+        -272,
+        528
       ],
-      "id": "prepare-batch-node",
+      "id": "0e3e23db-9021-4158-b2c8-bc0b9511bffa",
       "name": "Prepare Batch Data"
     },
     {
       "parameters": {
-        "operation": "insert",
         "schema": {
           "__rl": true,
           "value": "public",
@@ -153,17 +138,92 @@
           "value": {
             "total_files": "={{ $json.total_files }}",
             "batch_name": "={{ $json.batch_name }}"
-          }
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "batch_name",
+              "displayName": "batch_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_files",
+              "displayName": "total_files",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_files",
+              "displayName": "completed_files",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        100,
-        100
+        -96,
+        624
       ],
-      "id": "create-batch-node",
+      "id": "ad5687ee-313e-4037-bfba-8320893f46e7",
       "name": "Create Batch Record",
       "credentials": {
         "postgres": {
@@ -174,16 +234,17 @@
     },
     {
       "parameters": {
-        "mode": "multiplex",
-        "join": "cross"
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        300,
-        100
+        64,
+        560
       ],
-      "id": "merge-batch-node",
+      "id": "099a5e83-7b3b-4abf-b26e-236eb4a836a1",
       "name": "Merge Batch ID"
     },
     {
@@ -195,10 +256,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        48,
-        -544
+        -128,
+        -48
       ],
-      "id": "9fcc0fbd-8893-4a74-a48b-08530652c3b4",
+      "id": "327d6f4b-5e89-45cb-b4b3-693a77710eb6",
       "name": "Create Companies Table",
       "credentials": {
         "postgres": {
@@ -216,10 +277,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        48,
-        -320
+        -128,
+        176
       ],
-      "id": "9ea27f61-b7a0-4bc4-bea2-c5bca64c199b",
+      "id": "4919ed5e-38df-4db9-9c54-0a6154c6010f",
       "name": "Create Schema For Company",
       "credentials": {
         "postgres": {
@@ -382,10 +443,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        48,
-        -96
+        -128,
+        400
       ],
-      "id": "10b01029-d728-448b-a1b8-48743779a545",
+      "id": "b64b1f01-a5ce-4a67-9db1-3bc734cc2992",
       "name": "Insert rows in a table",
       "credentials": {
         "postgres": {
@@ -422,17 +483,6 @@
     "Loop Over Items": {
       "main": [
         [],
-        [
-          {
-            "node": "Wait",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait": {
-      "main": [
         [
           {
             "node": "Call My Sub-workflow",
@@ -536,7 +586,7 @@
     "availableInMCP": false,
     "errorWorkflow": "diOAConKTESzIqzi"
   },
-  "versionId": "cc87c256-cf7a-4901-b29d-849dac3290eb",
+  "versionId": "f70aa3cf-4d88-4076-bfef-150e78739975",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"

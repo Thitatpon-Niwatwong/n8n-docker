@@ -5,37 +5,26 @@
       "parameters": {
         "options": {}
       },
-      "id": "c990435d-8b4d-4d43-9adb-5ce938a7417f",
+      "id": "56f38e3f-350c-44c2-8aff-0fea55ef2330",
       "name": "Spreadsheet File: Read",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 1,
       "position": [
-        -1712,
-        -256
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "execute-workflow-trigger",
-      "name": "Execute Workflow Trigger",
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
-      "position": [
-        -2384,
-        -150
+        -2096,
+        -432
       ]
     },
     {
       "parameters": {
         "jsCode": "// === Normalize Excel rows from Thai headers to standard fields ===\n\n// ---- universal space cleaner ----\nfunction cleanSpaces(s) {\n  return String(s ?? '')\n    // ลบช่องว่างแปลกๆ (non-breaking, zero-width, full-width, etc.)\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, ' ')\n    // แปลง tab/newline ให้เป็น space ปกติ\n    .replace(/[\\t\\r\\n]+/g, ' ')\n    // รวม space ซ้ำ\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction onlyDigits(s) {\n  return String(s ?? '').replace(/\\D/g, '');\n}\n\n// แปลงเลขผู้เสียภาษีให้เป็น string ตัวเลขล้วน (ถ้าสั้นกว่า 13 จะ pad)\nfunction normVatId(v) {\n  if (v === null || v === undefined || v === '') return null;\n  let s = onlyDigits(v);\n  if (!s) return null;\n\n  // เคสหน่วยงานรัฐที่เป็น 0/0000000000000 จะจัดการทีหลังก็ได้\n  if (/^0+$/.test(s)) return '0';\n\n  if (s.length < 13) {\n    s = s.padStart(13, '0');\n  }\n  return s;\n}\n\n// แปลง branch ให้เป็น string 5 หลัก\nfunction normBranch(b) {\n  if (b === null || b === undefined) return null;\n  let raw = String(b).trim();\n  if (!raw) return '00000'; // ไม่มี = treat เป็นสำนักงานใหญ่ก็ได้\n  if (raw === 'รวม') return '00000'; // แถวสรุป หรือรวมสาขา → ไม่ใช่ใบกำกับจริง\n\n  let s = onlyDigits(raw);\n  if (!s) return '00000';\n  if (s === '0') s = '0';\n  return s.padStart(5, '0');\n}\n\n// แปลงจำนวนเงินให้เป็น Number (รองรับทั้ง string/มีคอมมา)\nfunction parseAmount(val) {\n  if (val === null || val === undefined || val === '') return null;\n  if (typeof val === 'number' && Number.isFinite(val)) return val;\n  const normalized = String(val).replace(/[^\\d.\\-]/g, '');\n  if (!normalized) return null;\n  const n = Number(normalized);\n  return Number.isNaN(n) ? null : n;\n}\n\n// normalize ชื่อบริษัท\nfunction normalizeCompanyName(name) {\n  if (!name) return null;\n  let s = cleanSpaces(String(name));\n  s = s.replace(/[“”\"']/g, '');\n  s = cleanSpaces(s);\n  return s || null;\n}\n\n// === main ===\nconst out = [];\n\nfor (const item of items) {\n  const r = item.json;\n\n  // ---- ดึงค่าจากหัวคอลัมน์ตามไฟล์ Excel นี้ ----\n  const inv      = cleanSpaces(r['เลขที่ใบกำกับภาษี'] ?? '');\n  const date     = cleanSpaces(r['วันที่ใบกำกับภาษี'] ?? '');\n  const ref_doc  = cleanSpaces(r['เลขที่เอกสารอ้างอิง'] ?? '');\n  const doc_title = cleanSpaces(r['ประเภทใบกำกับ'] ?? '');  // << เปลี่ยนจาก 'ประเภทเอกสาร' เป็น 'ประเภทใบกำกับ'\n  const contact_code = cleanSpaces(r['รหัสผู้ติดต่อ'] ?? '');\n  const vname   = cleanSpaces(r['ผู้ติดต่อ'] ?? '');\n  const vvat    = r['เลขทะเบียนผู้เสียภาษี'] ?? '';\n  const vbr     = r['สาขา/สำนักงานใหญ่'] ?? '';\n  const net     = r['รายการภาษี 7%'];\n  const vat     = r['ภาษีมูลค่าเพิ่ม'];\n  const grand   = r['มูลค่ารวมภาษี'];\n  const status  = cleanSpaces(r['สถานะ'] ?? '');\n\n  // ข้ามแถวที่ไม่มีข้อมูลหลัก (กันเคสว่าง/บรรทัดแปลกๆ)\n  if (!inv && !vvat && !vname) {\n    continue;\n  }\n\n  const vendor_name   = normalizeCompanyName(vname);\n  const vendor_vat_id = normVatId(vvat);\n  const vendor_branch = normBranch(vbr);\n\n  const net_amount    = parseAmount(net);\n  const vat_amount    = parseAmount(vat);\n  const grand_total   = parseAmount(grand);\n\n  out.push({\n    json: {\n      // key หลักที่ใช้ downstream\n      invoice_number: inv,\n      date_raw:       date,\n\n      vendor_name,\n      vendor_vat_id,\n      vendor_branch,\n\n      net_amount,\n      vat_amount,\n      grand_total,\n\n      ref_doc:       ref_doc,      \n      doc_title:     doc_title || null,\n      contact_code:  contact_code,  \n      status_text:   status || null\n    },\n    pairedItem: item.pairedItem,\n  });\n}\n\nreturn out;\n"
       },
-      "id": "a695c7d6-051a-4b05-8564-c287acc3bf99",
+      "id": "e0aff42e-3772-4007-a789-7ef84c526247",
       "name": "Code: Normalize rows",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1488,
-        -256
+        -1872,
+        -432
       ]
     },
     {
@@ -58,10 +47,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1712,
-        -64
+        -2096,
+        -240
       ],
-      "id": "3394fc3c-a236-4f9b-9c9c-9c2098279a74",
+      "id": "2a82d64e-ad75-447a-85ae-0ce176eddd64",
       "name": "Fetch Invoices from DB",
       "credentials": {
         "postgres": {
@@ -72,15 +61,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Compare Logic (Simplified) - With Flexible Name Comparison\n// Inputs:\n// 1. Excel Rows (Normalized) from \"Code: Normalize rows\"\n// 2. DB Rows (Normalized) from \"Normalize DB Rows\"\n\nfunction sameAmount(a, b, eps = 0.01) {\n  if (a == null || b == null) return false;\n  const na = Number(a);\n  const nb = Number(b);\n  if (Number.isNaN(na) || Number.isNaN(nb)) return false;\n  return Math.abs(na - nb) <= eps;\n}\n\nfunction cleanSpaces(s) {\n    return String(s ?? '').trim(); \n}\n\n// *** ฟังก์ชันใหม่: ลบช่องว่างทั้งหมดเพื่อเทียบชื่อ ***\nfunction normalizeNameForCompare(s) {\n    if (!s) return \"\";\n    return String(s).replace(/\\s+/g, ''); // ลบ space, tab, newline ทั้งหมด\n}\n\n// 1) Get Data\nconst excelItems = $items('Code: Normalize rows', 0, 0);\nconst excelRows  = excelItems.map(i => i.json);\n\nconst dbItems = $items('Normalize DB Rows', 0, 0);\nconst dbRows  = dbItems.map(i => i.json);\n\n// 2) Build Map (DB)\nconst dbMap = new Map();\nconst dbKeySet = new Set();\nconst excelKeySet = new Set();\n\nfor (const row of dbRows) {\n  const key = [row._norm_invoice_number, row._norm_vendor_vat_id, row._norm_vendor_branch].join('|');\n  dbKeySet.add(key);\n  if (!dbMap.has(key)) {\n    dbMap.set(key, row);\n  }\n}\n\n// 3) Pass 1: Excel -> DB\nconst out = [];\n\nfor (let index = 0; index < excelRows.length; index++) {\n  const r = excelRows[index];\n  \n  const invoice_number = r.invoice_number; \n  const vendor_vat_id  = r.vendor_vat_id;\n  const vendor_branch  = r.vendor_branch;\n  const vendor_name    = r.vendor_name;\n\n  if (!invoice_number && !vendor_vat_id && !vendor_name) continue;\n\n  const key = [invoice_number, vendor_vat_id, vendor_branch].join('|');\n  excelKeySet.add(key);\n\n  const inv = dbMap.get(key) || null;\n  let all_ok = false;\n  \n  let invoice_number_status = null;\n  let date_raw_status       = null;\n  let vendor_name_status    = null;\n  let vendor_vat_id_status  = null;\n  let vendor_branch_status  = null;\n  let net_amount_status     = null;\n  let vat_amount_status     = null;\n  let grand_total_status    = null;\n\n  if (inv) {\n    // Compare\n    invoice_number_status = (invoice_number === inv._norm_invoice_number);\n    \n    // Date\n    date_raw_status = (cleanSpaces(r.date_raw) === cleanSpaces(inv.date_raw));\n    \n    // *** แก้ไขตรงนี้: ใช้ normalizeNameForCompare ***\n    // เทียบแบบตัดช่องว่างทิ้ง: \"บริษัท ก\" จะเท่ากับ \"บริษัทก\"\n    vendor_name_status    = (normalizeNameForCompare(vendor_name) === normalizeNameForCompare(inv._norm_vendor_name));\n    \n    vendor_vat_id_status  = (vendor_vat_id  === inv._norm_vendor_vat_id);\n    vendor_branch_status  = (vendor_branch  === inv._norm_vendor_branch);\n\n    net_amount_status     = sameAmount(r.net_amount,  inv.net_amount);\n    vat_amount_status     = sameAmount(r.vat_amount,  inv.vat_amount);\n    grand_total_status    = sameAmount(r.grand_total, inv.grand_total);\n\n    all_ok = [\n      invoice_number_status, date_raw_status, vendor_name_status,\n      vendor_vat_id_status, vendor_branch_status,\n      net_amount_status, vat_amount_status, grand_total_status\n    ].every(v => v === true);\n  }\n\n  out.push({\n    json: {\n      source: 'excel',\n      missing_in_pdf: !inv,\n      missing_in_excel: false,\n      invoice_id: inv ? inv.id : null,\n      invoice_number, vendor_vat_id, vendor_branch,\n      invoice_number_status, date_raw_status, vendor_name_status,\n      vendor_vat_id_status, vendor_branch_status,\n      net_amount_status, vat_amount_status, grand_total_status,\n      invoice_status: null, buyer_vat_info_status: null,\n      all_ok,\n    },\n    pairedItem: excelItems[index]?.pairedItem,\n  });\n}\n\n// 4) Pass 2: DB -> Excel\nfor (const db of dbRows) {\n  const key = [db._norm_invoice_number, db._norm_vendor_vat_id, db._norm_vendor_branch].join('|');\n  \n  if (!excelKeySet.has(key)) {\n    out.push({\n      json: {\n        source: 'pdf',\n        missing_in_pdf: false,\n        missing_in_excel: true,\n        invoice_id: db.id,\n        invoice_number: db._norm_invoice_number,\n        vendor_vat_id:  db._norm_vendor_vat_id,\n        vendor_branch:  db._norm_vendor_branch,\n        invoice_number_status: null, date_raw_status: null, vendor_name_status: null,\n        vendor_vat_id_status: null, vendor_branch_status: null,\n        net_amount_status: null, vat_amount_status: null, grand_total_status: null,\n        invoice_status: null, buyer_vat_info_status: null,\n        all_ok: false,\n      }\n    });\n  }\n}\n\nreturn out;"
+        "jsCode": "// Compare Logic (Simplified) - With Flexible Name Comparison\n// Inputs:\n// 1. Excel Rows (Normalized) from \"Code: Normalize rows\"\n// 2. DB Rows (Normalized) from \"Normalize DB Rows\"\n\nfunction sameAmount(a, b, eps = 0.01) {\n  if (a == null || b == null) return false;\n  const na = Number(a);\n  const nb = Number(b);\n  if (Number.isNaN(na) || Number.isNaN(nb)) return false;\n  return Math.abs(na - nb) <= eps;\n}\n\nfunction cleanSpaces(s) {\n    return String(s ?? '').trim(); \n}\n\n// *** แก้ไขฟังก์ชันนี้: เพิ่มการจัดการ Space แปลกๆ จาก Excel/PDF ***\nfunction normalizeNameForCompare(s) {\n    if (!s) return \"\";\n    return String(s)\n        // [ \\t\\n] = space ปกติ, tab, newline\n        // \\u00A0  = Non-breaking space (Space ใน Excel ที่มักทำให้เทียบไม่ตรง)\n        // \\u200b  = Zero-width space (Space ที่มองไม่เห็น)\n        .replace(/[\\s\\t\\n\\r\\u00A0\\u200b]+/g, '') \n        .trim();\n}\n\n// 1) Get Data\nconst excelItems = $items('Code: Normalize rows', 0, 0);\nconst excelRows  = excelItems.map(i => i.json);\n\nconst dbItems = $items('Normalize DB Rows', 0, 0);\nconst dbRows  = dbItems.map(i => i.json);\n\n// 2) Build Map (DB)\nconst dbMap = new Map();\nconst dbKeySet = new Set();\nconst excelKeySet = new Set();\n\nfor (const row of dbRows) {\n  const key = [row._norm_invoice_number, row._norm_vendor_vat_id, row._norm_vendor_branch].join('|');\n  dbKeySet.add(key);\n  if (!dbMap.has(key)) {\n    dbMap.set(key, row);\n  }\n}\n\n// 3) Pass 1: Excel -> DB\nconst out = [];\n\nfor (let index = 0; index < excelRows.length; index++) {\n  const r = excelRows[index];\n  \n  const invoice_number = r.invoice_number; \n  const vendor_vat_id  = r.vendor_vat_id;\n  const vendor_branch  = r.vendor_branch;\n  const vendor_name    = r.vendor_name;\n\n  if (!invoice_number && !vendor_vat_id && !vendor_name) continue;\n\n  const key = [invoice_number, vendor_vat_id, vendor_branch].join('|');\n  excelKeySet.add(key);\n\n  const inv = dbMap.get(key) || null;\n  let all_ok = false;\n  \n  let invoice_number_status = null;\n  let date_raw_status       = null;\n  let vendor_name_status    = null;\n  let vendor_vat_id_status  = null;\n  let vendor_branch_status  = null;\n  let net_amount_status     = null;\n  let vat_amount_status     = null;\n  let grand_total_status    = null;\n\n  if (inv) {\n    // Compare\n    invoice_number_status = (invoice_number === inv._norm_invoice_number);\n    \n    // Date\n    date_raw_status = (cleanSpaces(r.date_raw) === cleanSpaces(inv.date_raw));\n    \n    // *** จุดที่ใช้งาน: เทียบชื่อแบบตัด Space ทุกชนิดทิ้ง ***\n    // ผลลัพธ์: \"บริษัท สยาม บี.ยู...\" == \"บริษัทสยามบี.ยู...\" (True)\n    vendor_name_status    = (normalizeNameForCompare(vendor_name) === normalizeNameForCompare(inv._norm_vendor_name));\n    \n    vendor_vat_id_status  = (vendor_vat_id  === inv._norm_vendor_vat_id);\n    vendor_branch_status  = (vendor_branch  === inv._norm_vendor_branch);\n\n    net_amount_status     = sameAmount(r.net_amount,  inv.net_amount);\n    vat_amount_status     = sameAmount(r.vat_amount,  inv.vat_amount);\n    grand_total_status    = sameAmount(r.grand_total, inv.grand_total);\n\n    all_ok = [\n      invoice_number_status, date_raw_status, vendor_name_status,\n      vendor_vat_id_status, vendor_branch_status,\n      net_amount_status, vat_amount_status, grand_total_status\n    ].every(v => v === true);\n  }\n\n  out.push({\n    json: {\n      source: 'excel',\n      missing_in_pdf: !inv,\n      missing_in_excel: false,\n      invoice_id: inv ? inv.id : null,\n      invoice_number, vendor_vat_id, vendor_branch,\n      invoice_number_status, date_raw_status, vendor_name_status,\n      vendor_vat_id_status, vendor_branch_status,\n      net_amount_status, vat_amount_status, grand_total_status,\n      invoice_status: null, buyer_vat_info_status: null,\n      all_ok,\n    },\n    pairedItem: excelItems[index]?.pairedItem,\n  });\n}\n\n// 4) Pass 2: DB -> Excel\nfor (const db of dbRows) {\n  const key = [db._norm_invoice_number, db._norm_vendor_vat_id, db._norm_vendor_branch].join('|');\n  \n  if (!excelKeySet.has(key)) {\n    out.push({\n      json: {\n        source: 'pdf',\n        missing_in_pdf: false,\n        missing_in_excel: true,\n        invoice_id: db.id,\n        invoice_number: db._norm_invoice_number,\n        vendor_vat_id:  db._norm_vendor_vat_id,\n        vendor_branch:  db._norm_vendor_branch,\n        invoice_number_status: null, date_raw_status: null, vendor_name_status: null,\n        vendor_vat_id_status: null, vendor_branch_status: null,\n        net_amount_status: null, vat_amount_status: null, grand_total_status: null,\n        invoice_status: null, buyer_vat_info_status: null,\n        all_ok: false,\n      }\n    });\n  }\n}\n\nreturn out;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1040,
-        -112
+        -1424,
+        -288
       ],
-      "id": "9cfbf132-6cda-4a7f-921e-e6de5e8b4501",
+      "id": "6bbad8e9-d9a4-493c-b697-63f5aac82655",
       "name": "Compare Logic"
     },
     {
@@ -88,10 +77,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1264,
-        -112
+        -1648,
+        -288
       ],
-      "id": "dfbcc54e-03c1-4273-85bf-682e7ccefc29",
+      "id": "b84a0125-8e17-4ce4-9345-158f191ba4df",
       "name": "Merge Excel and DB"
     },
     {
@@ -328,10 +317,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -368,
-        -40
+        -752,
+        -224
       ],
-      "id": "82d0abe0-d96d-4c61-a42b-aac797e0add2",
+      "id": "a26e70a6-4242-44e6-85e7-3199939a7539",
       "name": "Update Invoice Summary",
       "credentials": {
         "postgres": {
@@ -348,10 +337,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -1936,
-        -256
+        -2320,
+        -432
       ],
-      "id": "cbb2f817-07a8-40a8-9814-6dc5d78f01ed",
+      "id": "65a4c3aa-5968-4349-a888-3a369d3e4ec5",
       "name": "Read Excel File",
       "alwaysOutputData": false
     },
@@ -367,10 +356,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2384,
-        8
+        -2768,
+        -160
       ],
-      "id": "8456c28b-88ce-4cff-873e-f93fa6bd0937",
+      "id": "59bc4016-e32e-43ed-8f4d-8252b800c81f",
       "name": "Webhook",
       "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
     },
@@ -383,10 +372,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1264,
-        -448
+        -1648,
+        -624
       ],
-      "id": "decdcba5-797f-4ce7-acaa-79e97e8be680",
+      "id": "c1136f7e-28ee-4ebd-8c06-f7c8983836b5",
       "name": "Merge Comparison Results"
     },
     {
@@ -398,10 +387,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -816,
-        -40
+        -1200,
+        -224
       ],
-      "id": "a658576b-4d7c-464b-8427-69aa53b54bb6",
+      "id": "791b3b2c-6562-45c0-ad48-a990f194ea9a",
       "name": "Merge Final Results"
     },
     {
@@ -619,10 +608,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1040,
-        -544
+        -1424,
+        -720
       ],
-      "id": "e5ec39eb-1e68-4910-812e-6e14b9190d40",
+      "id": "ee3a3105-0520-438a-8f2a-e65b057188cb",
       "name": "Insert Missing Invoices",
       "credentials": {
         "postgres": {
@@ -641,10 +630,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1936,
-        344
+        -2320,
+        192
       ],
-      "id": "89972e1b-8e15-49fe-b9d8-37ade2aecd4a",
+      "id": "418ed946-c5b5-4046-9fb7-4515ae9ab92a",
       "name": "Fetch Comparison Report",
       "credentials": {
         "postgres": {
@@ -662,10 +651,10 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -1712,
-        344
+        -2096,
+        192
       ],
-      "id": "626be675-48d3-4f30-bd44-4e64b4a7ae33",
+      "id": "d6eb51d8-72fc-46d1-b531-3b593e339e70",
       "name": "Convert to File"
     },
     {
@@ -677,10 +666,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -1264,
-        272
+        -1648,
+        112
       ],
-      "id": "677f5ea2-ce97-4214-8f96-b94622e5d2c8",
+      "id": "dfacf763-f165-43dc-af43-3094df73f863",
       "name": "Read/Write Files from Disk"
     },
     {
@@ -690,10 +679,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2160,
-        8
+        -2544,
+        -160
       ],
-      "id": "36e5ed6a-e758-4e6a-a09f-9dbece2684ba",
+      "id": "3f956feb-9667-4574-9b8f-a74695882cf5",
       "name": "Hash Schema Name"
     },
     {
@@ -703,10 +692,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -592,
-        -40
+        -976,
+        -224
       ],
-      "id": "7b07043c-7e57-430a-8893-8030eda756cc",
+      "id": "4420054c-3732-46ff-87ed-ae8ad589b6a9",
       "name": "Filter Valid Rows"
     },
     {
@@ -851,10 +840,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1040,
-        -352
+        -1424,
+        -528
       ],
-      "id": "c13479af-6ca5-4c3a-8910-81ab366ff066",
+      "id": "44505abb-da60-4005-847c-6b7fdd996cf2",
       "name": "Insert rows in a table",
       "credentials": {
         "postgres": {
@@ -873,23 +862,23 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1488,
-        272
+        -1872,
+        112
       ],
-      "id": "18df7997-ad87-43fb-abe7-9f6ba21519a5",
+      "id": "4119b1a9-217a-4b01-8611-67432317ae92",
       "name": "Merge3"
     },
     {
       "parameters": {
         "jsCode": "// Normalize DB rows\nfunction cleanSpaces(s) {\n  return String(s ?? '')\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, ' ')\n    .replace(/[\\t\\r\\n]+/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction onlyDigits(s) {\n  return String(s ?? '').replace(/\\D/g, '');\n}\n\nfunction normVatId(v) {\n  if (v == null || v === '') return null;\n  let s = onlyDigits(v);\n  if (!s) return null;\n  if (/^0+$/.test(s)) return '0';\n  return s.padStart(13, '0');\n}\n\nfunction normBranch(b) {\n  if (b == null) return null;\n  let s = onlyDigits(String(b));\n  if (!s) return '00000';\n  return s.padStart(5, '0');\n}\n\nfunction normalizeCompanyName(name) {\n  if (!name) return null;\n  let s = cleanSpaces(String(name));\n  s = s.replace(/[“”\"']/g, '');\n  s = s.replace(/\\u200B/g, '');\n  s = s.replace(/\\s+/g, '');\n  return s || null;\n}\n\nconst items = $input.all();\nreturn items.map(item => {\n  const row = item.json;\n  return {\n    json: {\n      ...row,\n      _norm_invoice_number: cleanSpaces(row.invoice_number),\n      _norm_vendor_vat_id: normVatId(row.vendor_vat_id),\n      _norm_vendor_branch: normBranch(row.vendor_branch),\n      _norm_vendor_name: normalizeCompanyName(row.vendor_name)\n    }\n  };\n});\n"
       },
-      "id": "263c4737-f738-4678-a0b0-9305d08b0537",
+      "id": "27b6ecdd-9039-4ed3-a29f-425c290dabec",
       "name": "Normalize DB Rows",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1488,
-        -64
+        -1872,
+        -240
       ]
     }
   ],
@@ -1061,17 +1050,6 @@
         ]
       ]
     },
-    "Execute Workflow Trigger": {
-      "main": [
-        [
-          {
-            "node": "Hash Schema Name",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Filter Valid Rows": {
       "main": [
         [
@@ -1113,7 +1091,7 @@
     "availableInMCP": false,
     "errorWorkflow": "diOAConKTESzIqzi"
   },
-  "versionId": "8f3888a9-9750-4377-90ed-f8bc7b04585b",
+  "versionId": "f29dac62-e44d-421f-9a60-b5f333cce2b0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
