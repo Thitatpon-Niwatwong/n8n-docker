@@ -27,7 +27,9 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {},
+          "value": {
+            "batch_id": "={{ $json.id }}"
+          },
           "matchingColumns": [],
           "schema": [],
           "attemptToConvertTypes": false,
@@ -122,8 +124,72 @@
     },
     {
       "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{\n  json: {\n    total_files: items.length,\n    batch_name: 'Batch ' + new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        100
+      ],
+      "id": "prepare-batch-node",
+      "name": "Prepare Batch Data"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "name"
+        },
+        "table": {
+          "__rl": true,
+          "value": "workflow_batches",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total_files": "={{ $json.total_files }}",
+            "batch_name": "={{ $json.batch_name }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        100,
+        100
+      ],
+      "id": "create-batch-node",
+      "name": "Create Batch Record",
+      "credentials": {
+        "postgres": {
+          "id": "59xvxQayjivgQ1fN",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "multiplex",
+        "join": "cross"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        300,
+        100
+      ],
+      "id": "merge-batch-node",
+      "name": "Merge Batch ID"
+    },
+    {
+      "parameters": {
         "operation": "executeQuery",
-        "query": "CREATE TABLE IF NOT EXISTS public.vat_companies (\n    id SERIAL PRIMARY KEY,\n\n    vat_id TEXT NOT NULL,\n    branch TEXT NOT NULL,\n\n    company_name TEXT,\n    address      TEXT,\n\n    created_at TIMESTAMP DEFAULT NOW(),\n    updated_at TIMESTAMP DEFAULT NOW(),\n\n    CONSTRAINT vat_company_unique UNIQUE (vat_id, branch)\n);\n\nCREATE TABLE IF NOT EXISTS public.workflow_errors (\n    id SERIAL PRIMARY KEY,\n    timestamp TIMESTAMP,\n    workflow_name TEXT,\n    workflow_id TEXT,\n    execution_id TEXT,\n    execution_url TEXT,\n    last_node TEXT,\n    error_message TEXT,\n    error_stack TEXT\n);\n",
+        "query": "CREATE TABLE IF NOT EXISTS public.vat_companies (\n    id SERIAL PRIMARY KEY,\n\n    vat_id TEXT NOT NULL,\n    branch TEXT NOT NULL,\n\n    company_name TEXT,\n    address      TEXT,\n\n    created_at TIMESTAMP DEFAULT NOW(),\n    updated_at TIMESTAMP DEFAULT NOW(),\n\n    CONSTRAINT vat_company_unique UNIQUE (vat_id, branch)\n);\n\nCREATE TABLE IF NOT EXISTS public.workflow_errors (\n    id SERIAL PRIMARY KEY,\n    timestamp TIMESTAMP,\n    workflow_name TEXT,\n    workflow_id TEXT,\n    execution_id TEXT,\n    execution_url TEXT,\n    last_node TEXT,\n    error_message TEXT,\n    error_stack TEXT\n);\n\nCREATE TABLE IF NOT EXISTS public.workflow_batches (\n    id SERIAL PRIMARY KEY,\n    batch_name TEXT,\n    total_files INT,\n    completed_files INT DEFAULT 0,\n    created_at TIMESTAMP DEFAULT NOW(),\n    updated_at TIMESTAMP DEFAULT NOW(),\n    status TEXT DEFAULT 'pending'\n);",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -416,6 +482,44 @@
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Prepare Batch Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Batch ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Batch Data": {
+      "main": [
+        [
+          {
+            "node": "Create Batch Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Batch Record": {
+      "main": [
+        [
+          {
+            "node": "Merge Batch ID",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Batch ID": {
+      "main": [
+        [
           {
             "node": "Loop Over Items",
             "type": "main",

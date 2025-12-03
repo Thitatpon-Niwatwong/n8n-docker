@@ -3,6 +3,81 @@
   "nodes": [
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE workflow_batches SET completed_files = completed_files + 1, updated_at = NOW() WHERE id = $1 RETURNING completed_files, total_files;",
+        "options": {
+          "queryParameterValues": {
+            "values": [
+              {
+                "name": "batch_id",
+                "value": "={{ $('Start').first().json.batch_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2000,
+        0
+      ],
+      "id": "update-batch-node",
+      "name": "Update Batch Progress",
+      "credentials": {
+        "postgres": {
+          "id": "59xvxQayjivgQ1fN",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "uuid-cond-1",
+              "leftValue": "={{ $json.completed_files }}",
+              "rightValue": "={{ $json.total_files }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        0
+      ],
+      "id": "check-completion-node",
+      "name": "Check Completion"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        0
+      ],
+      "id": "all-done-node",
+      "name": "All Done"
+    },
+    {
+      "parameters": {
         "inputSource": "passthrough"
       },
       "id": "c9237fd0-93cf-41fc-aec2-8c2fcc842947",
@@ -2757,6 +2832,116 @@
         [
           {
             "node": "Detect Invoice Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Summary Table": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Summary Record": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table2": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table3": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table4": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table5": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table6": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table7": {
+      "main": [
+        [
+          {
+            "node": "Update Batch Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Batch Progress": {
+      "main": [
+        [
+          {
+            "node": "Check Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Completion": {
+      "main": [
+        [
+          {
+            "node": "All Done",
             "type": "main",
             "index": 0
           }
