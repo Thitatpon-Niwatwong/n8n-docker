@@ -1,0 +1,69 @@
+{
+  "name": "Global Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "id": "error-trigger-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WEBHOOK_URL_HERE",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "workflow",
+              "value": "={{$json.workflow.name}}"
+            },
+            {
+              "name": "node",
+              "value": "={{$json.execution.lastNodeExecuted}}"
+            },
+            {
+              "name": "error_message",
+              "value": "={{$json.execution.error.message}}"
+            },
+            {
+              "name": "client_id",
+              "value": "CLIENT_ID_PLACEHOLDER"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{new Date().toISOString()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Report to Developer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ],
+      "id": "report-node"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Report to Developer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

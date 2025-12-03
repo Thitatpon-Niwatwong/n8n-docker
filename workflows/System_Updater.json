@@ -1,0 +1,207 @@
+{
+  "name": "System Updater (Name Based)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/workflows_manifest.json",
+        "options": {}
+      },
+      "name": "Fetch Manifest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ],
+      "id": "fetch-manifest"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get All Local Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_N8N_API_KEY_CREDENTIAL_ID",
+          "name": "n8n API Key"
+        }
+      },
+      "id": "get-local-workflows"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create a map of Name -> ID\nconst localWorkflows = $('Get All Local Workflows').all()[0].json.data;\nconst manifest = $('Fetch Manifest').all()[0].json;\n\nconst updates = [];\n\nfor (const item of manifest) {\n  const match = localWorkflows.find(w => w.name === item.name);\n  if (match) {\n    updates.push({\n      id: match.id,\n      name: item.name,\n      url: item.url\n    });\n  }\n}\n\nreturn updates;"
+      },
+      "name": "Match Names to IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ],
+      "id": "match-names"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Loop Updates",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ],
+      "id": "loop-updates"
+    },
+    {
+      "parameters": {
+        "url": "={{$json.url}}",
+        "options": {}
+      },
+      "name": "Fetch Workflow JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1250,
+        200
+      ],
+      "id": "fetch-workflow-json"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://localhost:5678/api/v1/workflows/{{$node[\"Loop Updates\"].json[\"id\"]}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "authentication": "genericCredentialType",
+        "genericCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Update Workflow API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1450,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_N8N_API_KEY_CREDENTIAL_ID",
+          "name": "n8n API Key"
+        }
+      },
+      "id": "update-api"
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Manifest": {
+      "main": [
+        [
+          {
+            "node": "Get All Local Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Local Workflows": {
+      "main": [
+        [
+          {
+            "node": "Match Names to IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Names to IDs": {
+      "main": [
+        [
+          {
+            "node": "Loop Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Updates": {
+      "main": [
+        [
+          {
+            "node": "Fetch Workflow JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Workflow JSON": {
+      "main": [
+        [
+          {
+            "node": "Update Workflow API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Workflow API": {
+      "main": [
+        [
+          {
+            "node": "Loop Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
