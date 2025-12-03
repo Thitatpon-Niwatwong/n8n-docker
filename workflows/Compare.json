@@ -5,26 +5,26 @@
       "parameters": {
         "options": {}
       },
-      "id": "56f38e3f-350c-44c2-8aff-0fea55ef2330",
+      "id": "a9fec389-ab02-4bfa-a02d-a5863db2cc4e",
       "name": "Spreadsheet File: Read",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 1,
       "position": [
-        -2096,
-        -432
+        -752,
+        -448
       ]
     },
     {
       "parameters": {
         "jsCode": "// === Normalize Excel rows from Thai headers to standard fields ===\n\n// ---- universal space cleaner ----\nfunction cleanSpaces(s) {\n  return String(s ?? '')\n    // ลบช่องว่างแปลกๆ (non-breaking, zero-width, full-width, etc.)\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, ' ')\n    // แปลง tab/newline ให้เป็น space ปกติ\n    .replace(/[\\t\\r\\n]+/g, ' ')\n    // รวม space ซ้ำ\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction onlyDigits(s) {\n  return String(s ?? '').replace(/\\D/g, '');\n}\n\n// แปลงเลขผู้เสียภาษีให้เป็น string ตัวเลขล้วน (ถ้าสั้นกว่า 13 จะ pad)\nfunction normVatId(v) {\n  if (v === null || v === undefined || v === '') return null;\n  let s = onlyDigits(v);\n  if (!s) return null;\n\n  // เคสหน่วยงานรัฐที่เป็น 0/0000000000000 จะจัดการทีหลังก็ได้\n  if (/^0+$/.test(s)) return '0';\n\n  if (s.length < 13) {\n    s = s.padStart(13, '0');\n  }\n  return s;\n}\n\n// แปลง branch ให้เป็น string 5 หลัก\nfunction normBranch(b) {\n  if (b === null || b === undefined) return null;\n  let raw = String(b).trim();\n  if (!raw) return '00000'; // ไม่มี = treat เป็นสำนักงานใหญ่ก็ได้\n  if (raw === 'รวม') return '00000'; // แถวสรุป หรือรวมสาขา → ไม่ใช่ใบกำกับจริง\n\n  let s = onlyDigits(raw);\n  if (!s) return '00000';\n  if (s === '0') s = '0';\n  return s.padStart(5, '0');\n}\n\n// แปลงจำนวนเงินให้เป็น Number (รองรับทั้ง string/มีคอมมา)\nfunction parseAmount(val) {\n  if (val === null || val === undefined || val === '') return null;\n  if (typeof val === 'number' && Number.isFinite(val)) return val;\n  const normalized = String(val).replace(/[^\\d.\\-]/g, '');\n  if (!normalized) return null;\n  const n = Number(normalized);\n  return Number.isNaN(n) ? null : n;\n}\n\n// normalize ชื่อบริษัท\nfunction normalizeCompanyName(name) {\n  if (!name) return null;\n  let s = cleanSpaces(String(name));\n  s = s.replace(/[“”\"']/g, '');\n  s = cleanSpaces(s);\n  return s || null;\n}\n\n// === main ===\nconst out = [];\n\nfor (const item of items) {\n  const r = item.json;\n\n  // ---- ดึงค่าจากหัวคอลัมน์ตามไฟล์ Excel นี้ ----\n  const inv      = cleanSpaces(r['เลขที่ใบกำกับภาษี'] ?? '');\n  const date     = cleanSpaces(r['วันที่ใบกำกับภาษี'] ?? '');\n  const ref_doc  = cleanSpaces(r['เลขที่เอกสารอ้างอิง'] ?? '');\n  const doc_title = cleanSpaces(r['ประเภทใบกำกับ'] ?? '');  // << เปลี่ยนจาก 'ประเภทเอกสาร' เป็น 'ประเภทใบกำกับ'\n  const contact_code = cleanSpaces(r['รหัสผู้ติดต่อ'] ?? '');\n  const vname   = cleanSpaces(r['ผู้ติดต่อ'] ?? '');\n  const vvat    = r['เลขทะเบียนผู้เสียภาษี'] ?? '';\n  const vbr     = r['สาขา/สำนักงานใหญ่'] ?? '';\n  const net     = r['รายการภาษี 7%'];\n  const vat     = r['ภาษีมูลค่าเพิ่ม'];\n  const grand   = r['มูลค่ารวมภาษี'];\n  const status  = cleanSpaces(r['สถานะ'] ?? '');\n\n  // ข้ามแถวที่ไม่มีข้อมูลหลัก (กันเคสว่าง/บรรทัดแปลกๆ)\n  if (!inv && !vvat && !vname) {\n    continue;\n  }\n\n  const vendor_name   = normalizeCompanyName(vname);\n  const vendor_vat_id = normVatId(vvat);\n  const vendor_branch = normBranch(vbr);\n\n  const net_amount    = parseAmount(net);\n  const vat_amount    = parseAmount(vat);\n  const grand_total   = parseAmount(grand);\n\n  out.push({\n    json: {\n      // key หลักที่ใช้ downstream\n      invoice_number: inv,\n      date_raw:       date,\n\n      vendor_name,\n      vendor_vat_id,\n      vendor_branch,\n\n      net_amount,\n      vat_amount,\n      grand_total,\n\n      ref_doc:       ref_doc,      \n      doc_title:     doc_title || null,\n      contact_code:  contact_code,  \n      status_text:   status || null\n    },\n    pairedItem: item.pairedItem,\n  });\n}\n\nreturn out;\n"
       },
-      "id": "e0aff42e-3772-4007-a789-7ef84c526247",
+      "id": "0a301c19-b8a2-47ee-8645-a65c3ff66900",
       "name": "Code: Normalize rows",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1872,
-        -432
+        -528,
+        -448
       ]
     },
     {
@@ -47,10 +47,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -2096,
-        -240
+        -752,
+        -256
       ],
-      "id": "2a82d64e-ad75-447a-85ae-0ce176eddd64",
+      "id": "1474e27c-91af-43cd-b5b0-0f5078262980",
       "name": "Fetch Invoices from DB",
       "credentials": {
         "postgres": {
@@ -66,10 +66,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1424,
-        -288
+        -80,
+        -304
       ],
-      "id": "6bbad8e9-d9a4-493c-b697-63f5aac82655",
+      "id": "ab3be2cf-0cb1-4ba5-b27e-20054734ce1b",
       "name": "Compare Logic"
     },
     {
@@ -77,10 +77,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1648,
-        -288
+        -304,
+        -304
       ],
-      "id": "b84a0125-8e17-4ce4-9345-158f191ba4df",
+      "id": "bd9e84ab-15e5-4253-88b0-8611fed91f17",
       "name": "Merge Excel and DB"
     },
     {
@@ -317,10 +317,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -752,
-        -224
+        592,
+        -240
       ],
-      "id": "a26e70a6-4242-44e6-85e7-3199939a7539",
+      "id": "deeb5748-35d2-4ad9-a145-b75051dff9d1",
       "name": "Update Invoice Summary",
       "credentials": {
         "postgres": {
@@ -337,10 +337,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -2320,
-        -432
+        -976,
+        -448
       ],
-      "id": "65a4c3aa-5968-4349-a888-3a369d3e4ec5",
+      "id": "a59a6278-9f23-4d54-ba7c-ce136f3932d2",
       "name": "Read Excel File",
       "alwaysOutputData": false
     },
@@ -356,10 +356,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2768,
-        -160
+        -1424,
+        -176
       ],
-      "id": "59bc4016-e32e-43ed-8f4d-8252b800c81f",
+      "id": "ff753dc9-a420-407f-beaa-64babee78381",
       "name": "Webhook",
       "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
     },
@@ -372,10 +372,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1648,
-        -624
+        -304,
+        -640
       ],
-      "id": "c1136f7e-28ee-4ebd-8c06-f7c8983836b5",
+      "id": "1475aad1-5819-4a63-a563-da87a170b730",
       "name": "Merge Comparison Results"
     },
     {
@@ -387,10 +387,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1200,
-        -224
+        144,
+        -240
       ],
-      "id": "791b3b2c-6562-45c0-ad48-a990f194ea9a",
+      "id": "0f2b7db7-6dce-4605-afd4-63c213d9b61b",
       "name": "Merge Final Results"
     },
     {
@@ -608,10 +608,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1424,
-        -720
+        -80,
+        -736
       ],
-      "id": "ee3a3105-0520-438a-8f2a-e65b057188cb",
+      "id": "f6e11f48-2508-4c1d-ae2f-6d0cb07254e2",
       "name": "Insert Missing Invoices",
       "credentials": {
         "postgres": {
@@ -630,10 +630,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -2320,
+        -976,
         192
       ],
-      "id": "418ed946-c5b5-4046-9fb7-4515ae9ab92a",
+      "id": "f556bb3b-ed24-43c7-87f8-09a7d57efb19",
       "name": "Fetch Comparison Report",
       "credentials": {
         "postgres": {
@@ -651,10 +651,10 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -2096,
+        -752,
         192
       ],
-      "id": "d6eb51d8-72fc-46d1-b531-3b593e339e70",
+      "id": "741bf34e-4f3c-4e40-ba0b-52924bfeb835",
       "name": "Convert to File"
     },
     {
@@ -666,10 +666,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -1648,
+        -304,
         112
       ],
-      "id": "dfacf763-f165-43dc-af43-3094df73f863",
+      "id": "49979ebc-2e51-4756-b247-eca83257e8a8",
       "name": "Read/Write Files from Disk"
     },
     {
@@ -679,10 +679,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2544,
-        -160
+        -1200,
+        -176
       ],
-      "id": "3f956feb-9667-4574-9b8f-a74695882cf5",
+      "id": "06f9fccd-edb9-4f05-901e-8a1e540fb694",
       "name": "Hash Schema Name"
     },
     {
@@ -692,10 +692,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -976,
-        -224
+        368,
+        -240
       ],
-      "id": "4420054c-3732-46ff-87ed-ae8ad589b6a9",
+      "id": "9d8543cc-9887-41dc-b4f5-17d8cf67eef6",
       "name": "Filter Valid Rows"
     },
     {
@@ -840,10 +840,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1424,
-        -528
+        -80,
+        -544
       ],
-      "id": "44505abb-da60-4005-847c-6b7fdd996cf2",
+      "id": "ee40754b-3bc4-48c3-aead-a0c5014c837b",
       "name": "Insert rows in a table",
       "credentials": {
         "postgres": {
@@ -862,23 +862,34 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1872,
+        -528,
         112
       ],
-      "id": "4119b1a9-217a-4b01-8611-67432317ae92",
+      "id": "35e34459-64c7-4402-8a30-09354a693887",
       "name": "Merge3"
     },
     {
       "parameters": {
         "jsCode": "// Normalize DB rows\nfunction cleanSpaces(s) {\n  return String(s ?? '')\n    .replace(/[\\u00A0\\u1680\\u2000-\\u200D\\u202F\\u205F\\u3000\\uFEFF]/g, ' ')\n    .replace(/[\\t\\r\\n]+/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction onlyDigits(s) {\n  return String(s ?? '').replace(/\\D/g, '');\n}\n\nfunction normVatId(v) {\n  if (v == null || v === '') return null;\n  let s = onlyDigits(v);\n  if (!s) return null;\n  if (/^0+$/.test(s)) return '0';\n  return s.padStart(13, '0');\n}\n\nfunction normBranch(b) {\n  if (b == null) return null;\n  let s = onlyDigits(String(b));\n  if (!s) return '00000';\n  return s.padStart(5, '0');\n}\n\nfunction normalizeCompanyName(name) {\n  if (!name) return null;\n  let s = cleanSpaces(String(name));\n  s = s.replace(/[“”\"']/g, '');\n  s = s.replace(/\\u200B/g, '');\n  s = s.replace(/\\s+/g, '');\n  return s || null;\n}\n\nconst items = $input.all();\nreturn items.map(item => {\n  const row = item.json;\n  return {\n    json: {\n      ...row,\n      _norm_invoice_number: cleanSpaces(row.invoice_number),\n      _norm_vendor_vat_id: normVatId(row.vendor_vat_id),\n      _norm_vendor_branch: normBranch(row.vendor_branch),\n      _norm_vendor_name: normalizeCompanyName(row.vendor_name)\n    }\n  };\n});\n"
       },
-      "id": "27b6ecdd-9039-4ed3-a29f-425c290dabec",
+      "id": "77d3d44e-3399-47fd-b35d-ca1936333436",
       "name": "Normalize DB Rows",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1872,
-        -240
+        -528,
+        -256
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0083000c-2bf5-44fb-b253-0c9538e45d32",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        -352
       ]
     }
   ],
@@ -1082,6 +1093,17 @@
           }
         ]
       ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Hash Schema Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1091,7 +1113,7 @@
     "availableInMCP": false,
     "errorWorkflow": "diOAConKTESzIqzi"
   },
-  "versionId": "f29dac62-e44d-421f-9a60-b5f333cce2b0",
+  "versionId": "a775cc85-6fd0-42d5-95ab-f050d1600c15",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"

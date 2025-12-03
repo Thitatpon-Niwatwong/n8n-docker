@@ -3,16 +3,16 @@
   "nodes": [
     {
       "parameters": {
-        "fileSelector": "={{$json.body.pdfFolder}}",
+        "fileSelector": "={{ $json.body.schema }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -800,
-        400
+        -1584,
+        -48
       ],
-      "id": "846b86f2-ed0f-4e9f-9412-e90dcef5bd93",
+      "id": "5ea768b6-118e-4d5f-a729-eed4fc0758ac",
       "name": "Read/Write Files from Disk",
       "alwaysOutputData": false
     },
@@ -43,11 +43,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        528,
-        576
+        -48,
+        128
       ],
       "name": "Call My Sub-workflow",
-      "id": "b83f7072-afcc-4bcf-98c3-ac3340ab202b",
+      "id": "49eed5a7-1498-48b5-b4e7-644eb7de4ec9",
       "alwaysOutputData": false
     },
     {
@@ -57,10 +57,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        288,
-        560
+        -352,
+        112
       ],
-      "id": "839e5cf8-f3b2-4ee7-9cd1-05754bf54365",
+      "id": "1d7fe65a-662f-4b29-9c63-49de25d403ab",
       "name": "Loop Over Items"
     },
     {
@@ -75,10 +75,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -976,
-        400
+        -1760,
+        -48
       ],
-      "id": "8ffcaf5e-da0f-4fbb-aae5-f75e78a5a42a",
+      "id": "359f94e0-8254-400d-8ae8-e71d20e9cbaa",
       "name": "Webhook",
       "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
     },
@@ -89,10 +89,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -624,
-        400
+        -1408,
+        -48
       ],
-      "id": "c931e7a5-def5-4a4b-89d5-1f324f464313",
+      "id": "9fa6b990-5cd8-4711-8d7e-c9222173ef5f",
       "name": "Extract File Info"
     },
     {
@@ -102,10 +102,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -416,
-        400
+        -1200,
+        -48
       ],
-      "id": "4f8b73ef-bb78-4664-83a8-09528ca90040",
+      "id": "b79a1cb6-3ba1-430a-84a5-5971867da187",
       "name": "Hash Schema Name"
     },
     {
@@ -115,10 +115,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -272,
-        528
+        -976,
+        96
       ],
-      "id": "0e3e23db-9021-4158-b2c8-bc0b9511bffa",
+      "id": "442d3293-dbb1-400a-ae0d-d6ecfa20132c",
       "name": "Prepare Batch Data"
     },
     {
@@ -220,10 +220,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -96,
-        624
+        -736,
+        176
       ],
-      "id": "ad5687ee-313e-4037-bfba-8320893f46e7",
+      "id": "0ae34ce9-14db-4dda-93ac-655d583fdcba",
       "name": "Create Batch Record",
       "credentials": {
         "postgres": {
@@ -241,10 +241,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        64,
-        560
+        -576,
+        112
       ],
-      "id": "099a5e83-7b3b-4abf-b26e-236eb4a836a1",
+      "id": "94316cdc-3ffb-4d68-95d2-0bc18eff62ae",
       "name": "Merge Batch ID"
     },
     {
@@ -256,10 +256,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -128,
-        -48
+        -912,
+        -496
       ],
-      "id": "327d6f4b-5e89-45cb-b4b3-693a77710eb6",
+      "id": "387bcc7b-7a79-4252-8f40-a4892938af76",
       "name": "Create Companies Table",
       "credentials": {
         "postgres": {
@@ -271,16 +271,16 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- 1) สร้าง schema\nCREATE SCHEMA IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}};\n\n-- 2) ตาราง invoices: เก็บ \"ข้อมูลจริง\" ของใบกำกับภาษี\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.invoices (\n    id SERIAL PRIMARY KEY,\n\n    invoice_number   TEXT,\n    date_raw         TEXT,\n    doc_title        TEXT,\n\n    vendor_name      TEXT,\n    vendor_vat_id    TEXT,\n    vendor_branch    TEXT,\n\n    net_amount       NUMERIC(15,2),\n    vat_amount       NUMERIC(15,2),\n    grand_total      NUMERIC(15,2),\n\n    name             TEXT UNIQUE,\n    path             TEXT UNIQUE,\n\n    -- กันข้อมูลซ้ำ (invoice_number + vat_id + branch)\n    CONSTRAINT invoices_unique_triplet\n      UNIQUE (invoice_number, vendor_vat_id, vendor_branch),\n\n    created_at       TIMESTAMP DEFAULT NOW()\n);\n\n-- 3) ตารางสรุปผลตรวจสอบ (แก้ไข: invoice_id เป็น UNIQUE)\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.invoice_check_summary (\n    id SERIAL PRIMARY KEY,\n\n    -- [แก้ไข] เพิ่ม UNIQUE เพื่อบังคับ 1-to-1 กับตาราง invoices\n    invoice_id INT UNIQUE REFERENCES {{\n      $json.schema\n        .toLowerCase()\n        .replace(/[^a-zA-Z0-9_]/g, '_')\n    }}.invoices(id) ON DELETE CASCADE,\n\n    -- composite key ใช้สำหรับ upsert\n    invoice_number    TEXT NOT NULL,\n    vendor_vat_id     TEXT NOT NULL,\n    vendor_branch     TEXT NOT NULL,\n\n    -- boolean flags ของแต่ละ field\n    invoice_status              BOOLEAN,\n    buyer_vat_info_status       BOOLEAN,\n    invoice_number_status       BOOLEAN,\n    date_raw_status             BOOLEAN,\n    vendor_name_status          BOOLEAN,\n    vendor_vat_id_status        BOOLEAN,\n    vendor_vat_id_info_status   BOOLEAN,\n    vendor_branch_status        BOOLEAN,\n    net_amount_status           BOOLEAN,\n    vat_amount_status           BOOLEAN,\n    grand_total_status          BOOLEAN,\n    \n    buyer_address_status        BOOLEAN,\n    buyer_address_reason        TEXT,\n\n    -- presence flags\n    missing_in_pdf      BOOLEAN,\n    missing_in_excel    BOOLEAN,\n\n    -- summary\n    all_ok              BOOLEAN,\n\n    updated_at          TIMESTAMP DEFAULT NOW(),\n\n    -- unique constraint ป้องกันข้อมูลซ้ำ\n    CONSTRAINT uq_invoice_check_summary\n        UNIQUE (invoice_number, vendor_vat_id, vendor_branch)\n);\n\n-- 4) ตารางสำหรับ Excel (\"รายงานภาษีซื้อ\")\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.excel_purchase_tax (\n    id SERIAL PRIMARY KEY,\n\n    invoice_number   TEXT,\n    date_raw         TEXT,\n    doc_title        TEXT,\n    vendor_name      TEXT,\n    vendor_vat_id    TEXT,\n    vendor_branch    TEXT,\n\n    net_amount       NUMERIC(15,2),\n    vat_amount       NUMERIC(15,2),\n    grand_total      NUMERIC(15,2),\n\n    created_at       TIMESTAMP DEFAULT NOW()\n);",
+        "query": "-- 1) สร้าง schema\nCREATE SCHEMA IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}};\n\n-- 2) ตาราง invoices: เก็บ \"ข้อมูลจริง\" ของใบกำกับภาษี\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.invoices (\n    id SERIAL PRIMARY KEY,\n\n    invoice_number   TEXT,\n    date_raw         TEXT,\n    doc_title        TEXT,\n\n    vendor_name      TEXT,\n    vendor_vat_id    TEXT,\n    vendor_branch    TEXT,\n\n    net_amount       NUMERIC(15,2),\n    vat_amount       NUMERIC(15,2),\n    grand_total      NUMERIC(15,2),\n\n    name             TEXT UNIQUE,\n    path             TEXT UNIQUE,\n    is_done          BOOLEAN DEFAULT FALSE,\n\n    -- กันข้อมูลซ้ำ (invoice_number + vat_id + branch)\n    CONSTRAINT invoices_unique_triplet\n      UNIQUE (invoice_number, vendor_vat_id, vendor_branch),\n\n    created_at       TIMESTAMP DEFAULT NOW()\n);\n\n-- 3) ตารางสรุปผลตรวจสอบ (แก้ไข: invoice_id เป็น UNIQUE)\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.invoice_check_summary (\n    id SERIAL PRIMARY KEY,\n\n    -- [แก้ไข] เพิ่ม UNIQUE เพื่อบังคับ 1-to-1 กับตาราง invoices\n    invoice_id INT UNIQUE REFERENCES {{\n      $json.schema\n        .toLowerCase()\n        .replace(/[^a-zA-Z0-9_]/g, '_')\n    }}.invoices(id) ON DELETE CASCADE,\n\n    -- composite key ใช้สำหรับ upsert\n    invoice_number    TEXT NOT NULL,\n    vendor_vat_id     TEXT NOT NULL,\n    vendor_branch     TEXT NOT NULL,\n\n    -- boolean flags ของแต่ละ field\n    invoice_status              BOOLEAN,\n    buyer_vat_info_status       BOOLEAN,\n    invoice_number_status       BOOLEAN,\n    date_raw_status             BOOLEAN,\n    vendor_name_status          BOOLEAN,\n    vendor_vat_id_status        BOOLEAN,\n    vendor_vat_id_info_status   BOOLEAN,\n    vendor_branch_status        BOOLEAN,\n    net_amount_status           BOOLEAN,\n    vat_amount_status           BOOLEAN,\n    grand_total_status          BOOLEAN,\n    \n    buyer_address_status        BOOLEAN,\n    buyer_address_reason        TEXT,\n\n    -- presence flags\n    missing_in_pdf      BOOLEAN,\n    missing_in_excel    BOOLEAN,\n\n    -- summary\n    all_ok              BOOLEAN,\n\n    updated_at          TIMESTAMP DEFAULT NOW(),\n\n    -- unique constraint ป้องกันข้อมูลซ้ำ\n    CONSTRAINT uq_invoice_check_summary\n        UNIQUE (invoice_number, vendor_vat_id, vendor_branch)\n);\n\n-- 4) ตารางสำหรับ Excel (\"รายงานภาษีซื้อ\")\nCREATE TABLE IF NOT EXISTS {{\n  $json.schema\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9_]/g, '_')\n}}.excel_purchase_tax (\n    id SERIAL PRIMARY KEY,\n\n    invoice_number   TEXT,\n    date_raw         TEXT,\n    doc_title        TEXT,\n    vendor_name      TEXT,\n    vendor_vat_id    TEXT,\n    vendor_branch    TEXT,\n\n    net_amount       NUMERIC(15,2),\n    vat_amount       NUMERIC(15,2),\n    grand_total      NUMERIC(15,2),\n\n    created_at       TIMESTAMP DEFAULT NOW()\n);",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -128,
-        176
+        -912,
+        -272
       ],
-      "id": "4919ed5e-38df-4db9-9c54-0a6154c6010f",
+      "id": "a42a4032-d642-47f0-885b-fae29e1cb3b5",
       "name": "Create Schema For Company",
       "credentials": {
         "postgres": {
@@ -443,10 +443,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -128,
-        400
+        -768,
+        -64
       ],
-      "id": "b64b1f01-a5ce-4a67-9db1-3bc734cc2992",
+      "id": "03a8ebe9-7d14-452f-8275-8593b7e8637b",
       "name": "Insert rows in a table",
       "credentials": {
         "postgres": {
@@ -455,6 +455,57 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DO\n$$\nBEGIN\n\n    WHILE (SELECT COUNT(*) FROM {{ $json.schema }}.invoices WHERE is_done <> TRUE) <> 0\n    LOOP\n        PERFORM pg_sleep(2);\n    END LOOP;\nEND\n$$ LANGUAGE plpgsql;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -992,
+        272
+      ],
+      "id": "2f28dc3c-32d9-4494-a821-303b936450cc",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "59xvxQayjivgQ1fN",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\"excelFolder\": \"{{ $json.body.excelFolder}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -576,
+        400
+      ],
+      "id": "d9ff9e6c-e326-4058-83e2-6092477cfb9c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -768,
+        400
+      ],
+      "id": "19e18296-438d-4f1b-b79c-59c4ef492296",
+      "name": "Merge2"
     }
   ],
   "connections": {
@@ -499,6 +550,11 @@
             "node": "Read/Write Files from Disk",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
@@ -541,6 +597,11 @@
             "node": "Merge Batch ID",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -577,6 +638,33 @@
           }
         ]
       ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -586,7 +674,7 @@
     "availableInMCP": false,
     "errorWorkflow": "diOAConKTESzIqzi"
   },
-  "versionId": "f70aa3cf-4d88-4076-bfef-150e78739975",
+  "versionId": "4250e761-4134-4a1b-a6fb-eb7883585af6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
