@@ -103,6 +103,15 @@ services:
     restart: always
     logging: *default-logging
 
+  account_ui:
+    build: ./account_ui
+    image: account_ui:local
+    container_name: account_ui
+    ports:
+      - "8080:80"
+    restart: always
+    logging: *default-logging
+
   loki:
     image: grafana/loki:3.0.0
     container_name: loki
