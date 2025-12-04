@@ -3,63 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE workflow_batches SET completed_files = completed_files + 1, updated_at = NOW() WHERE id = $1 RETURNING completed_files, total_files;",
-        "options": {
-          "queryReplacement": "={{ $json[\"batch_id\"] }}"
-        }
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        1744,
-        -816
-      ],
-      "id": "a727ccfc-5854-461e-9384-76783873a269",
-      "name": "Update Batch Progress",
-      "credentials": {
-        "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "uuid-cond-1",
-              "leftValue": "={{ $json.completed_files }}",
-              "rightValue": "={{ $json.total_files }}",
-              "operator": {
-                "type": "number",
-                "operation": "equals",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1920,
-        -816
-      ],
-      "id": "e77f2fe1-e8ad-4fd0-8aa5-ea7e118c30c6",
-      "name": "Check Completion"
-    },
-    {
-      "parameters": {
         "mode": "combine",
         "combineBy": "combineAll",
         "options": {}
@@ -67,10 +10,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -864,
-        -896
+        -2064,
+        704
       ],
-      "id": "889e91f8-5b3c-4054-acfb-0431892bd32a",
+      "id": "f7a91229-a96e-458f-8894-90138f61257b",
       "name": "Merge Input"
     },
     {
@@ -101,10 +44,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -416,
-        -976
+        -1616,
+        624
       ],
-      "id": "90c7315e-94fc-460a-9995-d510d232e19b",
+      "id": "63b47e0c-b7ef-4713-a44e-d8705f2ebfc4",
       "name": "Check Invoice Status"
     },
     {
@@ -270,15 +213,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -416,
-        -1232
+        -1616,
+        368
       ],
-      "id": "f65113a5-a67c-4df3-9c26-06eb84d1ad22",
+      "id": "b3bc3475-8776-4830-b6bf-3eb7c8deac17",
       "name": "Update Invoices Table",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       },
       "onError": "continueRegularOutput"
@@ -494,15 +437,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -208,
-        -1088
+        -1408,
+        512
       ],
-      "id": "c9443e14-95a5-44ec-9a01-19f00b3777c6",
+      "id": "a4abcbb8-1141-4dbf-8647-8dd4ca180351",
       "name": "Update Summary Table",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -741,15 +684,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -416,
-        -1440
+        -1616,
+        160
       ],
-      "id": "e8a1e36b-a087-4c3c-a557-aea1d59014aa",
+      "id": "574cebd8-0f52-4d1b-bec1-d7d7ed608224",
       "name": "Insert Summary Record",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       },
       "onError": "continueRegularOutput"
@@ -782,10 +725,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -416,
-        -1632
+        -1616,
+        -32
       ],
-      "id": "e89d649c-62e1-4887-8ad8-54b619c94ffa",
+      "id": "a1aa8bd5-cd4a-46f9-9f9a-5ae6db7d0193",
       "name": "Check Amount OK"
     },
     {
@@ -939,15 +882,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -160,
-        -1744
+        -1360,
+        -144
       ],
-      "id": "1a14a22f-e783-471a-90c9-8fb9f1e90314",
+      "id": "ae3e6d76-5366-4f30-b049-bb3ad61ec3b6",
       "name": "Update rows in a table3",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1102,15 +1045,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -160,
-        -1568
+        -1360,
+        32
       ],
-      "id": "b49a9b83-6ef5-4b52-aa3b-48a382776b83",
+      "id": "11b4a59e-9a08-4848-96d9-5e7395e39a62",
       "name": "Update rows in a table4",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1142,10 +1085,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -192,
-        -608
+        -1392,
+        992
       ],
-      "id": "d5077c15-3db4-4c60-96ad-cb97ddce2f32",
+      "id": "d9ac7f62-d88c-4d93-8638-80db0707ce1f",
       "name": "Check Vendor VAT Found"
     },
     {
@@ -1159,16 +1102,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -416,
-        -608
+        -1616,
+        992
       ],
-      "id": "99e9d83d-6cdf-4280-b33b-63d0644acc08",
+      "id": "7b9489c3-ba02-4915-b003-50f0c83257e1",
       "name": "Check Vendor in DB",
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1176,9 +1119,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "rSF9qHXCIEXaHRo0",
+          "value": "ZGUUSw1GvZ9vuaby",
           "mode": "list",
-          "cachedResultUrl": "/workflow/rSF9qHXCIEXaHRo0",
+          "cachedResultUrl": "/workflow/ZGUUSw1GvZ9vuaby",
           "cachedResultName": "RD VAT Lookup"
         },
         "workflowInputs": {
@@ -1198,10 +1141,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        224,
-        -736
+        -976,
+        864
       ],
-      "id": "0155ddb6-9d08-4922-9b0a-fe0588c5f3c0",
+      "id": "c38e1cc7-630e-47f3-b1a3-ed1dc3e72272",
       "name": "Call RD VAT Lookup (Vendor)"
     },
     {
@@ -1436,15 +1379,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        224,
-        -528
+        -976,
+        1072
       ],
-      "id": "bf3b6158-9aa5-42d1-9d86-f984f3b58ad3",
+      "id": "fa7349dc-385e-4736-89a7-6c22e0196c2d",
       "name": "Update rows in a table5",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1476,10 +1419,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -192,
-        -288
+        -1392,
+        1312
       ],
-      "id": "546926ce-8f1c-48ba-93bc-d2b415f0be44",
+      "id": "3322b973-c36c-41b1-8ac0-64b5cb1633af",
       "name": "Check Buyer VAT Found"
     },
     {
@@ -1493,16 +1436,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -400,
-        -288
+        -1600,
+        1312
       ],
-      "id": "e32fda8f-66d3-4bf0-8869-29601d9de52e",
+      "id": "e2a937e9-a662-4eac-854c-2e6449ed9525",
       "name": "Check Buyer in DB",
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1717,15 +1660,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1216,
-        -192
+        16,
+        1408
       ],
-      "id": "e51ca759-2d8c-4334-a252-77c83dcbdf04",
+      "id": "57edc61b-53ca-498e-b4a3-b67ced40d537",
       "name": "Update rows in a table6",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -1733,9 +1676,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "rSF9qHXCIEXaHRo0",
+          "value": "ZGUUSw1GvZ9vuaby",
           "mode": "list",
-          "cachedResultUrl": "/workflow/rSF9qHXCIEXaHRo0",
+          "cachedResultUrl": "/workflow/ZGUUSw1GvZ9vuaby",
           "cachedResultName": "RD VAT Lookup"
         },
         "workflowInputs": {
@@ -1760,10 +1703,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        240,
-        -336
+        -960,
+        1264
       ],
-      "id": "3a082dbd-da6e-44be-a2a6-d9480833f462",
+      "id": "15193510-04c5-4f25-9345-6bccb615514a",
       "name": "Call RD VAT Lookup (Buyer)"
     },
     {
@@ -1775,10 +1718,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        32,
-        -528
+        -1168,
+        1072
       ],
-      "id": "3e5e60c5-a2f5-43b2-b908-7b574c2aebd7",
+      "id": "ab41d859-f9a8-48fe-9b98-65ea058eb5ff",
       "name": "Merge1"
     },
     {
@@ -1790,10 +1733,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        32,
-        -128
+        -1168,
+        1472
       ],
-      "id": "509df39c-a29c-443a-ac44-9d88bc0c6511",
+      "id": "a454138c-02c6-471b-8354-34aa35f8724e",
       "name": "Merge2"
     },
     {
@@ -1805,10 +1748,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        32,
-        -736
+        -1168,
+        864
       ],
-      "id": "5afebba0-bc92-4b9d-8594-51fc0b7d2464",
+      "id": "c27a2219-577a-4c5d-ac61-d7aa750eff2d",
       "name": "Merge3"
     },
     {
@@ -1820,10 +1763,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        32,
-        -336
+        -1168,
+        1264
       ],
-      "id": "0c1d8434-8c6b-46b8-95c0-b31fc6d7509b",
+      "id": "030b8f5e-ae15-4c20-b000-c2d5d2f4a30a",
       "name": "Merge4"
     },
     {
@@ -2037,15 +1980,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -208,
-        -880
+        -1408,
+        720
       ],
-      "id": "47bb37fd-6db9-45b4-a9cb-99834932983d",
+      "id": "5cbbacc2-a5fc-4102-95d7-9d732f8403a3",
       "name": "Update rows in a table2",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -2060,15 +2003,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        304,
-        160
+        -896,
+        1760
       ],
-      "id": "cdfe40a1-a6c9-4f99-b1f9-bb5a72c86b5c",
+      "id": "9a35a499-e1e7-423a-8a09-5a7114279314",
       "name": "Execute a SQL query",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -2077,10 +2020,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        544,
-        96
+        -656,
+        1696
       ],
-      "id": "c9e10902-cd43-47a0-b248-22af06b73245",
+      "id": "c2d7f2fc-44ee-4aba-bc78-57c75a7a2520",
       "name": "Merge5"
     },
     {
@@ -2090,10 +2033,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        752,
-        96
+        -448,
+        1696
       ],
-      "id": "c79d546a-8009-4319-95a8-db53a3d34881",
+      "id": "d72e6578-f6bf-4e5c-9d49-e514e6b8c359",
       "name": "Compare PDF vs DB"
     },
     {
@@ -2124,10 +2067,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        944,
-        96
+        -256,
+        1696
       ],
-      "id": "a5b5d3a9-a7de-41f5-be77-3e812b2ed3c4",
+      "id": "cd8f7207-5c56-4e79-bf08-dad6d18d6571",
       "name": "Check Address Match"
     },
     {
@@ -2341,15 +2284,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1216,
-        192
+        16,
+        1792
       ],
-      "id": "bf31876e-6b8a-4aad-b9d8-6a8b3ea77fed",
+      "id": "879928ff-1b15-4711-a6c9-46982631c117",
       "name": "Update rows in a table7",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -2371,21 +2314,21 @@
         "simplify": false,
         "options": {}
       },
-      "id": "d52a8f69-0a8f-4da4-8353-df4b9b78470e",
+      "id": "aa0862bd-d6a3-4ffa-ae71-31fe8bd0e85c",
       "name": "Gemini Chat",
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        -1776,
-        -1072
+        -2976,
+        528
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000,
       "maxTries": 5,
       "credentials": {
         "googlePalmApi": {
-          "id": "vH1keA93jgbvktnD",
-          "name": "Google Gemini(PaLM) Api account 3"
+          "id": "6QHmsJdg8R6oPilB",
+          "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
@@ -2403,20 +2346,20 @@
         "simplify": false,
         "options": {}
       },
-      "id": "2a479e3e-147f-4993-9696-42f926f85da8",
+      "id": "ce26d7f2-51a8-4ed7-9c0a-31775b30f6a3",
       "name": "Analyze Document (Gemini)",
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        -1920,
-        -1072
+        -3120,
+        528
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000,
       "maxTries": 5,
       "credentials": {
         "googlePalmApi": {
-          "id": "SxHRp3VG70iDXrQu",
+          "id": "MXuwW0Fk47S07X6q",
           "name": "Google Gemini(PaLM) Api account 2"
         }
       }
@@ -2425,13 +2368,13 @@
       "parameters": {
         "jsCode": "// Parse ALL LLM outputs → many items (not just the first one)\nconst inputs = $input.all();\nconst out = [];\n\n/* ---------- helpers ---------- */\n\n// ดึงข้อความดิบจากโครงสร้าง Gemini หลายรูปแบบ\nfunction collectRawText(obj) {\n  if (!obj) return \"\";\n\n  // กรณี 1: มี content.parts ตรง ๆ\n  if (obj?.content?.parts && Array.isArray(obj.content.parts)) {\n    return obj.content.parts\n      .map(p => p?.text ?? \"\")\n      .filter(Boolean)\n      .join(\"\\n\");\n  }\n\n  // กรณี 2: เป็นโครงสร้าง Gemini เต็ม ๆ ที่มี candidates\n  if (Array.isArray(obj?.candidates)) {\n    const texts = [];\n    for (const c of obj.candidates) {\n      if (c?.content?.parts && Array.isArray(c.content.parts)) {\n        texts.push(\n          ...c.content.parts\n            .map(p => p?.text ?? \"\")\n            .filter(Boolean)\n        );\n      } else if (typeof c?.content?.text === \"string\") {\n        texts.push(c.content.text);\n      }\n    }\n    if (texts.length) return texts.join(\"\\n\");\n  }\n\n  // กรณี 3: field text ธรรมดา\n  if (typeof obj?.text === \"string\") return obj.text;\n\n  // กรณี 4: ตัวมันเองเป็น string\n  if (typeof obj === \"string\") return obj;\n\n  return \"\";\n}\n\n// ไม่เปลี่ยนข้อความไทยของชื่อ/ที่อยู่/วันที่ แต่ \"จำนวนเงิน\" ต้องเป็น number\nfunction parseAmountToNumber(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === \"number\" && Number.isFinite(value)) return value;\n\n  // รับสตริงที่มีคอมมา/ช่องว่าง/สัญลักษณ์เงิน → ตัดออกให้เหลือเฉพาะตัวเลข จุด และลบ\n  const s = String(value).replace(/[^\\d.\\-]/g, \"\");\n  if (!s) return null;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : null;\n}\n\n// บังคับให้ตรง schema (ไม่มีให้เป็น null, จำนวนเงินต้องเป็น number)\n// + รองรับ alias key จาก LLM เช่น vendor_vat_id / buyer_vat_id → vendor_vat_id / buyer_vat_id\nfunction coerceToSchema(obj) {\n  const working = { ...obj };\n\n  // ---- alias mapping: vat → VAT ----\n  // ถ้า LLM ส่ง vendor_vat_id มา แต่ไม่มี vendor_vat_id → copy ไปใช้เป็น vendor_vat_id\n  if (working.vendor_vat_id == null && working.vendor_vat_id != null) {\n    working.vendor_vat_id = working.vendor_vat_id;\n  }\n  // เช่นเดียวกันสำหรับ buyer\n  if (working.buyer_vat_id == null && working.buyer_vat_id != null) {\n    working.buyer_vat_id = working.buyer_vat_id;\n  }\n\n  // schema ใหม่ใช้ *_vat_id\n  const schemaKeys = [\n    \"doc_title\",\n    \"invoice_number\",\n    \"date_raw\",\n    \"vendor_name\",\n    \"vendor_vat_id\",\n    \"vendor_branch\",\n    \"buyer_name\",\n    \"buyer_vat_id\",\n    \"buyer_branch\",\n    \"buyer_address_raw\",\n    \"net_amount\",\n    \"vat_amount\",\n    \"grand_total\",\n  ];\n\n  const result = {};\n\n  for (const k of schemaKeys) {\n    // จำนวนเงินไปจัดการทีหลัง\n    if (k === \"net_amount\" || k === \"vat_amount\" || k === \"grand_total\") continue;\n\n    if (Object.prototype.hasOwnProperty.call(working, k)) {\n      let v = working[k];\n\n      if (v === null || v === undefined) {\n        result[k] = null;\n      } else if (typeof v === \"string\") {\n        // ตัด \\n \\r \\t ทั่วไปออก (ยุบเป็น space)\n        v = v.replace(/[\\n\\r\\t]+/g, \" \");\n\n        // address ให้เป็นบรรทัดเดียว\n        if (k === \"buyer_address_raw\") {\n          v = v.replace(/\\s*\\n\\s*/g, \" \");\n        }\n\n        result[k] = v.trim();\n      } else {\n        // บังคับ cast เป็น string สำหรับ field ที่ไม่ใช่ number\n        result[k] = String(v).trim();\n      }\n    } else {\n      result[k] = null;\n    }\n  }\n\n  // บังคับจำนวนเงินเป็น number หรือ null\n  result.net_amount  = parseAmountToNumber(working.net_amount);\n  result.vat_amount  = parseAmountToNumber(working.vat_amount);\n  result.grand_total = parseAmountToNumber(working.grand_total);\n\n  // default branch: ถ้าไม่มี หรือเป็น string ว่าง → \"สำนักงานใหญ่\"\n  if (!result.vendor_branch) {\n    result.vendor_branch = \"สำนักงานใหญ่\";\n  }\n  if (!result.buyer_branch) {\n    result.buyer_branch = \"สำนักงานใหญ่\";\n  }\n\n  return result;\n}\n\n/* ---------- main ---------- */\n\nfor (let i = 0; i < inputs.length; i++) {\n  const item = inputs[i];\n\n  // ดึง raw text จากโครงสร้าง Gemini (candidates / content / parts)\n  const rawOutput = collectRawText(item.json);\n  const trimmed = (rawOutput ?? \"\").toString().trim();\n\n  // 1) ดึงบล็อกโค้ดแบบ fenced: ```json ...``` หรือ ``` ...```\n  let jsonBlocks = [];\n  const reJson = /```json\\s*([\\s\\S]*?)```/gi;\n  const reAny  = /```(?!json)([\\s\\S]*?)```/gi;\n  let m;\n\n  while ((m = reJson.exec(trimmed)) !== null) jsonBlocks.push(m[1].trim());\n  while ((m = reAny.exec(trimmed))  !== null) jsonBlocks.push(m[1].trim());\n\n  // 2) ถ้าไม่พบ fenced แต่เนื้อทั้งก้อนเป็น JSON ดิบ\n  if (jsonBlocks.length === 0) {\n    const t = trimmed;\n    if ((t.startsWith(\"{\") && t.endsWith(\"}\")) || (t.startsWith(\"[\") && t.endsWith(\"]\"))) {\n      jsonBlocks = [t];\n    }\n  }\n\n  if (jsonBlocks.length === 0) {\n    out.push({\n      json: {\n        error: \"JSON block not found\",\n        raw_output_preview: trimmed.slice(0, 400),\n      },\n      pairedItem: { item: i },\n    });\n    continue;\n  }\n\n  // 3) parse ทุก block ที่เจอ\n  for (const js of jsonBlocks) {\n    try {\n      const parsed = JSON.parse(js);\n\n      if (Array.isArray(parsed)) {\n        // กรณี LLM ส่ง array ของหลายเอกสาร\n        for (const o of parsed) {\n          const coerced = coerceToSchema(o ?? {});\n          out.push({ json: coerced, pairedItem: { item: i } });\n        }\n      } else {\n        const coerced = coerceToSchema(parsed ?? {});\n        out.push({ json: coerced, pairedItem: { item: i } });\n      }\n\n    } catch (e) {\n      out.push({\n        json: {\n          error: \"JSON parse error\",\n          snippet: js.slice(0, 300),\n          message: e.message,\n        },\n        pairedItem: { item: i },\n      });\n    }\n  }\n}\n\nreturn out;\n"
       },
-      "id": "c824422b-d415-4175-98d0-c382047e377a",
+      "id": "5d424f90-8d93-4b24-8955-b4d9690aaecd",
       "name": "Parse Gemini Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1504,
-        -1072
+        -2704,
+        528
       ]
     },
     {
@@ -2441,10 +2384,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1184,
-        -1072
+        -2384,
+        528
       ],
-      "id": "1e1e99a5-1dbd-4782-b703-4810819ab625",
+      "id": "d346f5a6-a988-4efb-b87c-1ff0c330db07",
       "name": "Detect Invoice Type"
     },
     {
@@ -2454,10 +2397,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1024,
-        -1072
+        -2224,
+        528
       ],
-      "id": "349a575a-beb3-4d67-8f8c-69be614a69da",
+      "id": "86cd67cb-369d-4092-a971-58e857937793",
       "name": "Validate Amounts"
     },
     {
@@ -2467,56 +2410,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1344,
-        -1072
+        -2544,
+        528
       ],
-      "id": "dfa66cf8-7557-43ca-97c4-638846e6357c",
+      "id": "4814c0f2-c266-4bef-8b19-9edffcf4c4b3",
       "name": "Normalize Extracted Data"
     },
     {
       "parameters": {
         "inputSource": "passthrough"
       },
-      "id": "caaac5b4-3849-4bfd-b490-e169ef1aa7b0",
+      "id": "a117e7c2-4dbc-45f8-b384-8954303abb25",
       "typeVersion": 1.1,
       "name": "Start",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "position": [
-        -2064,
-        -880
+        -3264,
+        720
       ]
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "mZffE3wZjSPvaiRf",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/mZffE3wZjSPvaiRf",
-          "cachedResultName": "Compare"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "body": {
-              "schema": "={{ $('Start').first().json.directory }}"
-            }
-          },
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        2128,
-        -928
-      ],
-      "id": "ca1e816b-737d-4ad7-b469-ab96b8654c00",
-      "name": "Trigger Compare Workflow"
     },
     {
       "parameters": {
@@ -2527,10 +2438,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        272,
-        -1776
+        -928,
+        -176
       ],
-      "id": "6375ead5-7944-4752-95fa-509b3cab816f",
+      "id": "c327d8f1-2196-4a55-babc-4c96e4875c80",
       "name": "Merge"
     },
     {
@@ -2542,10 +2453,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        256,
-        -1504
+        -944,
+        96
       ],
-      "id": "2ade5d31-ea4f-4894-8d87-d26ef89a2d7d",
+      "id": "99295148-6bb7-4233-8a81-10866613fec4",
       "name": "Merge6"
     },
     {
@@ -2720,123 +2631,20 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -496,
-        -112
+        -1696,
+        1488
       ],
-      "id": "89ed0f5e-6e19-4368-8f34-d54ce10bc8fc",
+      "id": "0f65b858-90f9-4b9d-a772-709beae91f83",
       "name": "Update rows in a table8",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "select count(*) from {{ $json.schema }}.invoices i where is_done <> true",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        -1696,
-        480
-      ],
-      "id": "704e7882-ece0-4705-9eab-77bc203e0df9",
-      "name": "Execute a SQL query1",
-      "credentials": {
-        "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "fee219f4-84c3-4612-a0cb-a97d6ef28b75",
-              "leftValue": "={{ $json.count }}",
-              "rightValue": "0",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -1312,
-        512
-      ],
-      "id": "e268b994-1b40-4483-baea-64fd7b01e21b",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "mZffE3wZjSPvaiRf",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/mZffE3wZjSPvaiRf",
-          "cachedResultName": "Compare"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {}
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        -832,
-        416
-      ],
-      "id": "0cd26ce7-459f-496b-b417-452e38d348af",
-      "name": "Call 'Compare'"
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch",
-        "useDataOfInput": 2
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1056,
-        432
-      ],
-      "id": "0390670b-40d3-4a4f-8951-bae33133651a",
-      "name": "Merge7"
     }
   ],
   "connections": {
-    "Check Completion": {
-      "main": [
-        [
-          {
-            "node": "Trigger Compare Workflow",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Merge Input": {
       "main": [
         [
@@ -2926,16 +2734,6 @@
         ]
       ]
     },
-    "Update Summary Table": {
-      "main": [
-        []
-      ]
-    },
-    "Insert Summary Record": {
-      "main": [
-        []
-      ]
-    },
     "Check Amount OK": {
       "main": [
         [
@@ -3005,11 +2803,6 @@
         ]
       ]
     },
-    "Update rows in a table5": {
-      "main": [
-        []
-      ]
-    },
     "Check Buyer VAT Found": {
       "main": [
         [
@@ -3037,11 +2830,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Update rows in a table6": {
-      "main": [
-        []
       ]
     },
     "Merge1": {
@@ -3093,11 +2881,6 @@
         ]
       ]
     },
-    "Update rows in a table2": {
-      "main": [
-        []
-      ]
-    },
     "Execute a SQL query": {
       "main": [
         [
@@ -3147,11 +2930,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Update rows in a table7": {
-      "main": [
-        []
       ]
     },
     "Gemini Chat": {
@@ -3235,84 +3013,17 @@
           }
         ]
       ]
-    },
-    "Update Batch Progress": {
-      "main": [
-        [
-          {
-            "node": "Check Completion",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        []
-      ]
-    },
-    "Merge6": {
-      "main": [
-        []
-      ]
-    },
-    "Update rows in a table8": {
-      "main": [
-        []
-      ]
-    },
-    "Execute a SQL query1": {
-      "main": [
-        [
-          {
-            "node": "If",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
-      "main": [
-        [
-          {
-            "node": "Merge7",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call 'Compare'": {
-      "main": [
-        []
-      ]
-    },
-    "Merge7": {
-      "main": [
-        [
-          {
-            "node": "Call 'Compare'",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false,
-    "errorWorkflow": "diOAConKTESzIqzi"
+    "executionOrder": "v1"
   },
-  "versionId": "dc63f39a-2335-48a7-806f-8c62740ff889",
+  "versionId": "c504ab2a-fb97-4c5d-9fc7-8ba0f05ccd76",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
+    "instanceId": "6962ca3cf3c5c6d554b1df6c8fcdb88b3fc234ca00377a579e43a16ceff74be2"
   },
-  "id": "EQrK4Gri1hVk5blH",
+  "id": "VguX48T7nyitEfFZ",
   "tags": []
 }

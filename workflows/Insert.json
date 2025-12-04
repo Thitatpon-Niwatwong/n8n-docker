@@ -3,110 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "fileSelector": "={{ $json.body.schema }}",
+        "fileSelector": "={{ $json.pdfFolder }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -1584,
-        -48
+        1104,
+        944
       ],
-      "id": "5ea768b6-118e-4d5f-a729-eed4fc0758ac",
+      "id": "7ff61a20-bd3b-4364-b09a-15459f2e008a",
       "name": "Read/Write Files from Disk",
       "alwaysOutputData": false
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "EQrK4Gri1hVk5blH",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/EQrK4Gri1hVk5blH",
-          "cachedResultName": "parallel sub workflow"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "batch_id": "={{ $json.id }}"
-          },
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "mode": "each",
-        "options": {
-          "waitForSubWorkflow": false
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        -48,
-        128
-      ],
-      "name": "Call My Sub-workflow",
-      "id": "49eed5a7-1498-48b5-b4e7-644eb7de4ec9",
-      "alwaysOutputData": false
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        -352,
-        112
-      ],
-      "id": "1d7fe65a-662f-4b29-9c63-49de25d403ab",
-      "name": "Loop Over Items"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "insert",
-        "responseMode": "responseNode",
-        "options": {
-          "rawBody": "={{ true }}"
-        }
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -1760,
-        -48
-      ],
-      "id": "359f94e0-8254-400d-8ae8-e71d20e9cbaa",
-      "name": "Webhook",
-      "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const bin = item.binary?.data; \n\n  const directory = bin?.directory || \"\";\n  const fileName  = bin?.fileName  || \"\";\n\n  return {\n    json: {\n      fileName,\n      directory,\n      // full path รวมชื่อไฟล์ด้วย\n      path: directory\n        ? `${directory}/${fileName}`\n        : fileName\n    },\n    binary: item.binary   \n  };\n});\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1408,
-        -48
-      ],
-      "id": "9fa6b990-5cd8-4711-8d7e-c9222173ef5f",
-      "name": "Extract File Info"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\n// ดึงชื่อโฟลเดอร์สุดท้าย เช่น \"ก\", \"ข\", \"สยามบียู\"\nconst folder = items[0].json.directory.split('/').pop();\n\n// normalize unicode ให้คงที่\nconst normalized = folder.normalize(\"NFC\");\n\n// hash สำหรับ schema\nconst schema = 's_' + Buffer.from(normalized).toString('hex').slice(0, 16);\n\n// คืนค่าพร้อมข้อมูลเดิมทุก item + binary เดิม\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    schema,\n  },\n  binary: item.binary,\n}));\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1200,
-        -48
-      ],
-      "id": "b79a1cb6-3ba1-430a-84a5-5971867da187",
-      "name": "Hash Schema Name"
     },
     {
       "parameters": {
@@ -115,10 +23,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -976,
-        96
+        1712,
+        1088
       ],
-      "id": "442d3293-dbb1-400a-ae0d-d6ecfa20132c",
+      "id": "3989f6aa-b3a5-4beb-b3a0-fc3021053d4c",
       "name": "Prepare Batch Data"
     },
     {
@@ -220,15 +128,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -736,
-        176
+        1952,
+        1168
       ],
-      "id": "0ae34ce9-14db-4dda-93ac-655d583fdcba",
+      "id": "af50277a-9a1a-488c-ba07-818fb4c7f2b9",
       "name": "Create Batch Record",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -241,11 +149,154 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        -576,
-        112
+        2112,
+        1104
       ],
-      "id": "94316cdc-3ffb-4d68-95d2-0bc18eff62ae",
+      "id": "aafd0d1d-12ac-4f4a-8431-ddbee37fe5d0",
       "name": "Merge Batch ID"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DO\n$$\nBEGIN\n\n    WHILE (SELECT COUNT(*) FROM {{ $json.schema }}.invoices WHERE is_done <> TRUE) <> 0\n    LOOP\n        PERFORM pg_sleep(2);\n    END LOOP;\nEND\n$$ LANGUAGE plpgsql;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1696,
+        1264
+      ],
+      "id": "3c5d7d42-2c0a-4ce8-9fb0-d1c3681b0f21",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\"excelFolder\": \"{{ $json.excelFolder}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2112,
+        1392
+      ],
+      "id": "15d03aad-8ec9-4ba8-816a-9cb707154dca",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1920,
+        1392
+      ],
+      "id": "1e684e5f-7547-4905-98f7-79710dd25795",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VguX48T7nyitEfFZ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/VguX48T7nyitEfFZ",
+          "cachedResultName": "parallel sub workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "batch_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        1120
+      ],
+      "name": "Call My Sub-workflow1",
+      "id": "6948f12c-e255-4420-8826-89b3c2378225",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2336,
+        1104
+      ],
+      "id": "7ad1a56f-d854-44f6-8da2-0c0bf4d0c417",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insert",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": "={{ true }}"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        944
+      ],
+      "id": "9614d9d8-5b63-450d-944e-60bc55886267",
+      "name": "Webhook1",
+      "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const bin = item.binary?.data; \n\n  const directory = bin?.directory || \"\";\n  const fileName  = bin?.fileName  || \"\";\n\n  return {\n    json: {\n      fileName,\n      directory,\n      // full path รวมชื่อไฟล์ด้วย\n      path: directory\n        ? `${directory}/${fileName}`\n        : fileName\n    },\n    binary: item.binary   \n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        944
+      ],
+      "id": "99db74fb-3be9-4fa6-855e-f4fa6181590d",
+      "name": "Extract File Info1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// ดึงชื่อโฟลเดอร์สุดท้าย เช่น \"ก\", \"ข\", \"สยามบียู\"\nconst folder = items[0].json.directory.split('/').pop();\n\n// normalize unicode ให้คงที่\nconst normalized = folder.normalize(\"NFC\");\n\n// hash สำหรับ schema\nconst schema = 's_' + Buffer.from(normalized).toString('hex').slice(0, 16);\n\n// คืนค่าพร้อมข้อมูลเดิมทุก item + binary เดิม\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    schema,\n  },\n  binary: item.binary,\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        944
+      ],
+      "id": "5bc367bb-f6ae-493c-a9d1-2a762e95ec25",
+      "name": "Hash Schema Name1"
     },
     {
       "parameters": {
@@ -256,15 +307,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -912,
-        -496
+        1776,
+        496
       ],
-      "id": "387bcc7b-7a79-4252-8f40-a4892938af76",
-      "name": "Create Companies Table",
+      "id": "c409fc61-147d-458b-b793-0cb3133d3d8d",
+      "name": "Create Companies Table1",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -277,15 +328,15 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -912,
-        -272
+        1776,
+        720
       ],
-      "id": "a42a4032-d642-47f0-885b-fae29e1cb3b5",
-      "name": "Create Schema For Company",
+      "id": "ed88e455-19b5-4a59-b8f4-d7eb4474fc3a",
+      "name": "Create Schema For Company1",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       }
     },
@@ -443,69 +494,44 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -768,
-        -64
+        1920,
+        928
       ],
-      "id": "03a8ebe9-7d14-452f-8275-8593b7e8637b",
-      "name": "Insert rows in a table",
+      "id": "45922c6a-561f-4382-855b-5d604e1ea05a",
+      "name": "Insert rows in a table1",
       "credentials": {
         "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
+          "id": "T3mqtePQK5NhND4T",
+          "name": "Postgres account"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "DO\n$$\nBEGIN\n\n    WHILE (SELECT COUNT(*) FROM {{ $json.schema }}.invoices WHERE is_done <> TRUE) <> 0\n    LOOP\n        PERFORM pg_sleep(2);\n    END LOOP;\nEND\n$$ LANGUAGE plpgsql;",
-        "options": {}
+        "jsCode": "// body ของ webhook เป็น string ต้อง parse เอง\nconst raw = $json.body;\n \nreturn [\n  {\n    json: {\n      pdfFolder: raw.pdfFolder\n    }\n  }\n];"
       },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -992,
-        272
+        864,
+        944
       ],
-      "id": "2f28dc3c-32d9-4494-a821-303b936450cc",
-      "name": "Execute a SQL query",
-      "credentials": {
-        "postgres": {
-          "id": "59xvxQayjivgQ1fN",
-          "name": "Postgres account 3"
-        }
-      }
+      "id": "67ed3d5e-b8d5-4a31-8c5f-cbcbec51bf2c",
+      "name": "Code in JavaScript1"
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\n\"excelFolder\": \"{{ $json.body.excelFolder}}\"\n}",
-        "options": {}
+        "jsCode": "const raw = $json.body;\n \nreturn [\n  {\n    json: {\n      pdfFolder: raw.pdfFolder\n    }\n  }\n];"
       },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -576,
-        400
+        1552,
+        1408
       ],
-      "id": "d9ff9e6c-e326-4058-83e2-6092477cfb9c",
-      "name": "Respond to Webhook"
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineAll",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -768,
-        400
-      ],
-      "id": "19e18296-438d-4f1b-b79c-59c4ef492296",
-      "name": "Merge2"
+      "id": "9c322e56-62e2-486d-beaa-72eb5cae5e61",
+      "name": "Code in JavaScript"
     }
   ],
   "connections": {
@@ -513,93 +539,7 @@
       "main": [
         [
           {
-            "node": "Extract File Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call My Sub-workflow": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Over Items": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Call My Sub-workflow",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Read/Write Files from Disk",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge2",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Extract File Info": {
-      "main": [
-        [
-          {
-            "node": "Hash Schema Name",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Hash Schema Name": {
-      "main": [
-        [
-          {
-            "node": "Create Schema For Company",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Insert rows in a table",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Create Companies Table",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Prepare Batch Data",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge Batch ID",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Execute a SQL query",
+            "node": "Extract File Info1",
             "type": "main",
             "index": 0
           }
@@ -632,16 +572,11 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "Loop Over Items1",
             "type": "main",
             "index": 0
           }
         ]
-      ]
-    },
-    "Insert rows in a table": {
-      "main": [
-        []
       ]
     },
     "Execute a SQL query": {
@@ -665,20 +600,125 @@
           }
         ]
       ]
+    },
+    "Call My Sub-workflow1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Call My Sub-workflow1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Info1": {
+      "main": [
+        [
+          {
+            "node": "Hash Schema Name1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash Schema Name1": {
+      "main": [
+        [
+          {
+            "node": "Create Schema For Company1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Companies Table1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Batch Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Batch ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false,
-    "errorWorkflow": "diOAConKTESzIqzi"
+    "executionOrder": "v1"
   },
-  "versionId": "4250e761-4134-4a1b-a6fb-eb7883585af6",
+  "versionId": "70d47495-bdee-4313-b93b-e71c74119e02",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
+    "instanceId": "6962ca3cf3c5c6d554b1df6c8fcdb88b3fc234ca00377a579e43a16ceff74be2"
   },
-  "id": "o03zVvw5oYeUQt7S",
+  "id": "gMydjcaAEU7IHhlw",
   "tags": []
 }
