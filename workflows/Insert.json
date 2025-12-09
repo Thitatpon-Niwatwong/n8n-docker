@@ -3,16 +3,16 @@
   "nodes": [
     {
       "parameters": {
-        "fileSelector": "={{ $json.pdfFolder }}",
+        "fileSelector": "={{ $json.body.schema }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        1104,
-        944
+        -720,
+        448
       ],
-      "id": "7ff61a20-bd3b-4364-b09a-15459f2e008a",
+      "id": "69a617e7-ec0a-40d5-9c84-30139eab7ddb",
       "name": "Read/Write Files from Disk",
       "alwaysOutputData": false
     },
@@ -23,10 +23,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1712,
-        1088
+        -64,
+        592
       ],
-      "id": "3989f6aa-b3a5-4beb-b3a0-fc3021053d4c",
+      "id": "72026c80-627e-4d6d-b630-7561df62f4ee",
       "name": "Prepare Batch Data"
     },
     {
@@ -128,14 +128,14 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1952,
-        1168
+        176,
+        672
       ],
-      "id": "af50277a-9a1a-488c-ba07-818fb4c7f2b9",
+      "id": "4ad6ca48-4d53-4d74-a402-cefad3677e0f",
       "name": "Create Batch Record",
       "credentials": {
         "postgres": {
-          "id": "T3mqtePQK5NhND4T",
+          "id": "U97z4MVW6z8NDJpd",
           "name": "Postgres account"
         }
       }
@@ -149,10 +149,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        2112,
-        1104
+        336,
+        608
       ],
-      "id": "aafd0d1d-12ac-4f4a-8431-ddbee37fe5d0",
+      "id": "687ecf85-22e4-479b-8459-8df7b7466a2d",
       "name": "Merge Batch ID"
     },
     {
@@ -164,14 +164,14 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1696,
-        1264
+        -80,
+        768
       ],
-      "id": "3c5d7d42-2c0a-4ce8-9fb0-d1c3681b0f21",
+      "id": "61b63747-7a2f-4ab4-a8cc-fe9442c7587c",
       "name": "Execute a SQL query",
       "credentials": {
         "postgres": {
-          "id": "T3mqtePQK5NhND4T",
+          "id": "U97z4MVW6z8NDJpd",
           "name": "Postgres account"
         }
       }
@@ -179,16 +179,16 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n\"excelFolder\": \"{{ $json.excelFolder}}\"\n}",
+        "responseBody": "={\n\"excelFolder\": \"{{ $json.body.excelFolder }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2112,
-        1392
+        336,
+        896
       ],
-      "id": "15d03aad-8ec9-4ba8-816a-9cb707154dca",
+      "id": "562c1a9a-cece-4a5d-8095-19b4768fe9a6",
       "name": "Respond to Webhook"
     },
     {
@@ -200,19 +200,19 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1920,
-        1392
+        144,
+        896
       ],
-      "id": "1e684e5f-7547-4905-98f7-79710dd25795",
+      "id": "db026213-54cb-42f1-b902-4f23373522a1",
       "name": "Merge2"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "VguX48T7nyitEfFZ",
+          "value": "WKlvPCyp9aKNMs7j",
           "mode": "list",
-          "cachedResultUrl": "/workflow/VguX48T7nyitEfFZ",
+          "cachedResultUrl": "/workflow/WKlvPCyp9aKNMs7j",
           "cachedResultName": "parallel sub workflow"
         },
         "workflowInputs": {
@@ -233,11 +233,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2640,
-        1120
+        864,
+        624
       ],
       "name": "Call My Sub-workflow1",
-      "id": "6948f12c-e255-4420-8826-89b3c2378225",
+      "id": "c307cf56-12a5-4440-b8e8-c106b4070a9f",
       "alwaysOutputData": false
     },
     {
@@ -247,10 +247,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2336,
-        1104
+        560,
+        608
       ],
-      "id": "7ad1a56f-d854-44f6-8da2-0c0bf4d0c417",
+      "id": "ed44b9ba-5242-4c03-82e3-71678e3b67e4",
       "name": "Loop Over Items1"
     },
     {
@@ -265,10 +265,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        624,
-        944
+        -944,
+        448
       ],
-      "id": "9614d9d8-5b63-450d-944e-60bc55886267",
+      "id": "b42fe926-6f11-45ed-870b-86af8b15e589",
       "name": "Webhook1",
       "webhookId": "ecb7626f-8968-4654-be8f-555b9f7f12f7"
     },
@@ -279,10 +279,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
-        944
+        -496,
+        448
       ],
-      "id": "99db74fb-3be9-4fa6-855e-f4fa6181590d",
+      "id": "6370b324-99e0-49d8-9228-841c07baadc7",
       "name": "Extract File Info1"
     },
     {
@@ -292,10 +292,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1488,
-        944
+        -288,
+        448
       ],
-      "id": "5bc367bb-f6ae-493c-a9d1-2a762e95ec25",
+      "id": "fe9c18ba-c6f2-4b97-8151-1e69bba06d03",
       "name": "Hash Schema Name1"
     },
     {
@@ -307,14 +307,14 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1776,
-        496
+        0,
+        0
       ],
-      "id": "c409fc61-147d-458b-b793-0cb3133d3d8d",
+      "id": "22b91dcd-483a-41ae-b695-c7c23bacdfe9",
       "name": "Create Companies Table1",
       "credentials": {
         "postgres": {
-          "id": "T3mqtePQK5NhND4T",
+          "id": "U97z4MVW6z8NDJpd",
           "name": "Postgres account"
         }
       }
@@ -328,14 +328,14 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1776,
-        720
+        0,
+        224
       ],
-      "id": "ed88e455-19b5-4a59-b8f4-d7eb4474fc3a",
+      "id": "66262bfd-c2ef-44c7-98b9-db3850add470",
       "name": "Create Schema For Company1",
       "credentials": {
         "postgres": {
-          "id": "T3mqtePQK5NhND4T",
+          "id": "U97z4MVW6z8NDJpd",
           "name": "Postgres account"
         }
       }
@@ -494,46 +494,56 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1920,
-        928
+        144,
+        432
       ],
-      "id": "45922c6a-561f-4382-855b-5d604e1ea05a",
+      "id": "25c4f868-d828-4c90-acce-2b9e73720bc7",
       "name": "Insert rows in a table1",
       "credentials": {
         "postgres": {
-          "id": "T3mqtePQK5NhND4T",
+          "id": "U97z4MVW6z8NDJpd",
           "name": "Postgres account"
         }
       },
       "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "// body ของ webhook เป็น string ต้อง parse เอง\nconst raw = $json.body;\n \nreturn [\n  {\n    json: {\n      pdfFolder: raw.pdfFolder\n    }\n  }\n];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        864,
-        944
-      ],
-      "id": "67ed3d5e-b8d5-4a31-8c5f-cbcbec51bf2c",
-      "name": "Code in JavaScript1"
-    },
-    {
-      "parameters": {
-        "jsCode": "const raw = $json.body;\n \nreturn [\n  {\n    json: {\n      pdfFolder: raw.pdfFolder\n    }\n  }\n];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1552,
-        1408
-      ],
-      "id": "9c322e56-62e2-486d-beaa-72eb5cae5e61",
-      "name": "Code in JavaScript"
     }
   ],
+  "pinData": {
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "content-type": "application/json",
+            "user-agent": "PostmanRuntime/7.49.1",
+            "accept": "*/*",
+            "cache-control": "no-cache",
+            "postman-token": "f81f635c-ac22-4cb0-abaa-8da731af3d5b",
+            "host": "localhost:5678",
+            "accept-encoding": "gzip, deflate, br",
+            "connection": "keep-alive",
+            "content-length": "141"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "schema": "/home/node/.n8n-files/VAT/สยามบียู/*.pdf",
+            "excelFolder": "/home/node/.n8n-files/VAT/2568-08/**/*.xlsx"
+          },
+          "webhookUrl": "http://localhost:5678/webhook/insert",
+          "executionMode": "production"
+        },
+        "binary": {
+          "data": {
+            "data": "ew0KICAic2NoZW1hIjogIi9ob21lL25vZGUvLm44bi1maWxlcy9WQVQv4Liq4Lii4Liy4Lih4Lia4Li14Lii4Li5LyoucGRmIiwNCiAgImV4Y2VsRm9sZGVyIjogIi9ob21lL25vZGUvLm44bi1maWxlcy9WQVQvMjU2OC0wOC8qKi8qLnhsc3giDQp9",
+            "mimeType": "application/json"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
     "Read/Write Files from Disk": {
       "main": [
@@ -628,14 +638,14 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript1",
+            "node": "Read/Write Files from Disk",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Code in JavaScript",
+            "node": "Merge2",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -686,39 +696,17 @@
           }
         ]
       ]
-    },
-    "Code in JavaScript1": {
-      "main": [
-        [
-          {
-            "node": "Read/Write Files from Disk",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Merge2",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "70d47495-bdee-4313-b93b-e71c74119e02",
+  "versionId": "d11bc900-8665-46fa-bdee-4b902fe59414",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "6962ca3cf3c5c6d554b1df6c8fcdb88b3fc234ca00377a579e43a16ceff74be2"
+    "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
   },
-  "id": "gMydjcaAEU7IHhlw",
+  "id": "iEKjKX9xAzj9UpeH",
   "tags": []
 }

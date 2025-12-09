@@ -23,9 +23,14 @@ services:
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - N8N_WORKFLOW_SAVED_TO_FILE=true
+      - N8N_WORKFLOW_FILE_PATH=/workflows
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_USER_MANAGEMENT_DISABLED=true
+
     volumes:
       - ./n8n-data:/home/node/.n8n
-      - ./n8n-files:/files
+      - ./n8n-files:/home/node/.n8n-files
       - ./workflows:/workflows
     restart: always
     depends_on:
@@ -47,7 +52,7 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -147,5 +152,3 @@ services:
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     restart: always
     logging: *default-logging
-
-
