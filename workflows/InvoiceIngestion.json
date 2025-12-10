@@ -1,5 +1,5 @@
 {
-  "name": "Insert",
+  "name": "Invoice Ingestion",
   "nodes": [
     {
       "parameters": {
@@ -508,42 +508,6 @@
       "onError": "continueRegularOutput"
     }
   ],
-  "pinData": {
-    "Webhook1": [
-      {
-        "json": {
-          "headers": {
-            "content-type": "application/json",
-            "user-agent": "PostmanRuntime/7.49.1",
-            "accept": "*/*",
-            "cache-control": "no-cache",
-            "postman-token": "f81f635c-ac22-4cb0-abaa-8da731af3d5b",
-            "host": "localhost:5678",
-            "accept-encoding": "gzip, deflate, br",
-            "connection": "keep-alive",
-            "content-length": "141"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "schema": "/home/node/.n8n-files/VAT/สยามบียู/*.pdf",
-            "excelFolder": "/home/node/.n8n-files/VAT/2568-08/**/*.xlsx"
-          },
-          "webhookUrl": "http://localhost:5678/webhook/insert",
-          "executionMode": "production"
-        },
-        "binary": {
-          "data": {
-            "data": "ew0KICAic2NoZW1hIjogIi9ob21lL25vZGUvLm44bi1maWxlcy9WQVQv4Liq4Lii4Liy4Lih4Lia4Li14Lii4Li5LyoucGRmIiwNCiAgImV4Y2VsRm9sZGVyIjogIi9ob21lL25vZGUvLm44bi1maWxlcy9WQVQvMjU2OC0wOC8qKi8qLnhsc3giDQp9",
-            "mimeType": "application/json"
-          }
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
   "connections": {
     "Read/Write Files from Disk": {
       "main": [

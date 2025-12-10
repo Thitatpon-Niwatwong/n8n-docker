@@ -23,11 +23,11 @@ services:
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - N8N_WORKFLOW_SAVED_TO_FILE=true
-      - N8N_WORKFLOW_FILE_PATH=/workflows
+      # N8N Configuration
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SECURE_COOKIE=false
       - N8N_BASIC_AUTH_ACTIVE=false
       - N8N_USER_MANAGEMENT_DISABLED=true
-
     volumes:
       - ./n8n-data:/home/node/.n8n
       - ./n8n-files:/home/node/.n8n-files
@@ -97,7 +97,7 @@ services:
   grafana:
     image: grafana/grafana
     container_name: grafana
-    user: "0"
+    user: "0" # Run as root to avoid volume permission issues
     ports:
       - "3000:3000"
     volumes:
@@ -141,6 +141,8 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
+    ports:
+      - "9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro

@@ -1,0 +1,287 @@
+{
+  "name": "Invoice Extraction",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1136,
+        880
+      ],
+      "id": "14272617-422d-48ac-a77b-f87ab6bad2bc",
+      "name": "Merge Input"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert Thai Data Normalization AI. \nYour task is to validate, clean, and standardize the invoice data into a PERFECT JSON format.\n\n### Input Data:\n{{ JSON.stringify($json) }}\n\n### Processing Rules (Strictly Follow):\n\n1.  **Address Cleaning (buyer_address_raw):**\n    -   EXTRACT only: House No, Moo, Village/Building, Road, Sub-district, District, Province, Zip Code.\n    -   **REMOVE:** Company names, Recipient names, \"Tel.\", \"Fax.\", \"Tax ID\", and phone numbers.\n    -   **FORMATTING & ABBREVIATIONS (CRITICAL):**\n        -   **Road:** Always use **\"ถ.\"** instead of \"ถนน\".\n        -   **Sub-district:** Use **\"ต.\"** instead of \"ตำบล\" (for provinces).\n        -   **District:** Use **\"อ.\"** instead of \"อำเภอ\" (for provinces).\n        -   **Province:** Use **\"จ.\"** instead of \"จังหวัด\".\n        -   **Bangkok Case:** For Bangkok, use \"แขวง\" and \"เขต\" as standard, but use \"ถ.\" for road. Use \"กรุงเทพมหานคร\" or \"กทม.\" based on context.\n        -   **Moo:** Use \"หมู่ที่\" or \"หมู่\" followed by the number.\n    -   **SPACING:** Ensure exactly ONE space between each address component.\n    -   **Target Format Example:** \"35/3 หมู่ที่ 5 ถ.เศรษฐกิจ 1 ต.คอกกระบือ อ.เมืองสมุทรสาคร จ.สมุทรสาคร 74000\"\n\n2.  **Date Formatting (date_raw):**\n    -   Ensure the date is strictly in **\"DD/MM/YYYY\"** format (e.g., 16/08/2025).\n\n3.  **Name Standardization (vendor_name, buyer_name):**\n    -   **Expand Abbreviations:** Convert \"บจก.\" or \"บ.\" to \"บริษัท ... จำกัด\" (Full Legal Name).\n    -   Remove leading/trailing spaces.\n\n4.  **Branch Codes (vendor_branch, buyer_branch) - STRICT:**\n    -   **Format:** Must ALWAYS be a **5-digit string** (e.g., \"00000\", \"00001\").\n    -   **Conversion Logic:**\n        -   \"สำนักงานใหญ่\", \"HQ\", \"Head Office\", or null -> **\"00000\"**\n        -   \"สาขาที่ 1\", \"Branch 1\", \"1\" -> **\"00001\"**\n        -   \"สาขา 23\" -> **\"00023\"**\n    -   **Action:** Pad with leading zeros to ensure length is exactly 5.\n\n5.  **Numeric Fields & Calculation (net_amount, vat_amount, grand_total):**\n    -   Output as purely **Numbers** (no commas, no currency symbols).\n    -   **CALCULATION LOGIC (CRITICAL):**\n        -   If `grand_total` is **null**, **missing**, or **0**: You MUST calculate it.\n        -   **Formula:** `grand_total` = `net_amount` + `vat_amount`.\n        -   Ensure the result has valid precision (e.g., 2 decimal places if needed).\n\n6.  **Document Title Cleaning (doc_title):**\n    -   **Language:** Must be **THAI**.\n    -   **Action:** If the title contains both English and Thai, **KEEP ONLY THE THAI TEXT**.\n    -   If only English is present, translate it to \"ใบกำกับภาษี\".\n\n7.  **Invoice Validation (has_invoice):**\n    -   Analyze the CLEANED \"doc_title\".\n    -   **Set \"has_invoice\": false** IF the title contains:\n        - \"อย่างย่อ\" (Abbreviated)\n        - \"สำเนา\" (Copy)\n        - OR if it does NOT contain \"ใบกำกับภาษี\".\n    -   **Set \"has_invoice\": true** ONLY IF the title contains \"ใบกำกับภาษี\" AND is NOT a Copy or Abbreviated.\n\n8.  **Structure:**\n    -   Return the exact same JSON keys as input with cleaned values.\n    -   Add the \"has_invoice\" key.\n    -   Output ONLY the JSON Array.\n\n### Expected Output Example:\n[\n  {\n    \"doc_title\": \"ต้นฉบับใบกำกับภาษี\",\n    \"invoice_number\": \"75700\",\n    \"date_raw\": \"16/08/2025\",\n    \"vendor_name\": \"บริษัท สยาม บี.ยู.อิมปอร์ต-เอ็กซ์ปอร์ต จำกัด\",\n    \"vendor_vat_id\": \"0105534087004\",\n    \"vendor_branch\": \"00001\",\n    \"buyer_name\": \"บริษัท ซีเซลล์ เทคโนโลยี จำกัด\",\n    \"buyer_vat_id\": \"0745558001007\",\n    \"buyer_branch\": \"00000\",\n    \"buyer_address_raw\": \"35/3 หมู่ 5 ต.คอกกระบือ อ.เมืองสมุทรสาคร จ.สมุทรสาคร 74000\",\n    \"net_amount\": 92000,\n    \"vat_amount\": 6440,\n    \"grand_total\": 98440,\n    \"has_invoice\": true\n  }\n]"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {}
+      },
+      "id": "6a369955-2f40-437d-b195-722a8a6d6039",
+      "name": "Gemini Chat",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2048,
+        704
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ind0q5wLm5LOwGoI",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "text": "Role: Invoice OCR.\nRules:\n1. vat_id: Extract only the 13-digit Tax ID\n2. grand_total: Return Number or null if NOT explicitly visible.\n3. Other fields: Extract text exactly as seen.\n4. Prefer Thai Text: For fields containing names or titles (doc_title, vendor_name, buyer_name, buyer_address_raw), extract the Thai text if both Thai and English are present.\nOutput JSON:\n{\n \"doc_title\": \"String|null\",\n \"invoice_number\": \"String|null\",\n \"date_raw\": \"String|null\",\n \"vendor_name\": \"String|null\",\n \"vendor_vat_id\": \"String|null\",\n \"vendor_branch\": \"String|null\",\n \"buyer_name\": \"String|null\",\n \"buyer_vat_id\": \"String|null\",\n \"buyer_branch\": \"String|null\",\n \"buyer_address_raw\": \"String|null\",\n \"net_amount\": \"Number|null\",\n \"vat_amount\": \"Number|null\",\n \"grand_total\": \"Number|null\"\n}",
+        "inputType": "binary",
+        "simplify": false,
+        "options": {}
+      },
+      "id": "ef332719-e07f-46c8-9a0e-12082654e437",
+      "name": "Analyze Document (Gemini)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        704
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "c1SgChN1d7FfPADP",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse ALL LLM outputs → many items (not just the first one)\nconst inputs = $input.all();\nconst out = [];\n\n/* ---------- helpers ---------- */\n\n// ดึงข้อความดิบจากโครงสร้าง Gemini หลายรูปแบบ\nfunction collectRawText(obj) {\n  if (!obj) return \"\";\n\n  // กรณี 1: มี content.parts ตรง ๆ\n  if (obj?.content?.parts && Array.isArray(obj.content.parts)) {\n    return obj.content.parts\n      .map(p => p?.text ?? \"\")\n      .filter(Boolean)\n      .join(\"\\n\");\n  }\n\n  // กรณี 2: เป็นโครงสร้าง Gemini เต็ม ๆ ที่มี candidates\n  if (Array.isArray(obj?.candidates)) {\n    const texts = [];\n    for (const c of obj.candidates) {\n      if (c?.content?.parts && Array.isArray(c.content.parts)) {\n        texts.push(\n          ...c.content.parts\n            .map(p => p?.text ?? \"\")\n            .filter(Boolean)\n        );\n      } else if (typeof c?.content?.text === \"string\") {\n        texts.push(c.content.text);\n      }\n    }\n    if (texts.length) return texts.join(\"\\n\");\n  }\n\n  // กรณี 3: field text ธรรมดา\n  if (typeof obj?.text === \"string\") return obj.text;\n\n  // กรณี 4: ตัวมันเองเป็น string\n  if (typeof obj === \"string\") return obj;\n\n  return \"\";\n}\n\n// ไม่เปลี่ยนข้อความไทยของชื่อ/ที่อยู่/วันที่ แต่ \"จำนวนเงิน\" ต้องเป็น number\nfunction parseAmountToNumber(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === \"number\" && Number.isFinite(value)) return value;\n\n  // รับสตริงที่มีคอมมา/ช่องว่าง/สัญลักษณ์เงิน → ตัดออกให้เหลือเฉพาะตัวเลข จุด และลบ\n  const s = String(value).replace(/[^\\d.\\-]/g, \"\");\n  if (!s) return null;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : null;\n}\n\n// บังคับให้ตรง schema (ไม่มีให้เป็น null, จำนวนเงินต้องเป็น number)\n// + รองรับ alias key จาก LLM เช่น vendor_vat_id / buyer_vat_id → vendor_vat_id / buyer_vat_id\nfunction coerceToSchema(obj) {\n  const working = { ...obj };\n\n  // ---- alias mapping: vat → VAT ----\n  // ถ้า LLM ส่ง vendor_vat_id มา แต่ไม่มี vendor_vat_id → copy ไปใช้เป็น vendor_vat_id\n  if (working.vendor_vat_id == null && working.vendor_vat_id != null) {\n    working.vendor_vat_id = working.vendor_vat_id;\n  }\n  // เช่นเดียวกันสำหรับ buyer\n  if (working.buyer_vat_id == null && working.buyer_vat_id != null) {\n    working.buyer_vat_id = working.buyer_vat_id;\n  }\n\n  // schema ใหม่ใช้ *_vat_id\n  const schemaKeys = [\n    \"doc_title\",\n    \"invoice_number\",\n    \"date_raw\",\n    \"vendor_name\",\n    \"vendor_vat_id\",\n    \"vendor_branch\",\n    \"buyer_name\",\n    \"buyer_vat_id\",\n    \"buyer_branch\",\n    \"buyer_address_raw\",\n    \"net_amount\",\n    \"vat_amount\",\n    \"grand_total\",\n  ];\n\n  const result = {};\n\n  for (const k of schemaKeys) {\n    // จำนวนเงินไปจัดการทีหลัง\n    if (k === \"net_amount\" || k === \"vat_amount\" || k === \"grand_total\") continue;\n\n    if (Object.prototype.hasOwnProperty.call(working, k)) {\n      let v = working[k];\n\n      if (v === null || v === undefined) {\n        result[k] = null;\n      } else if (typeof v === \"string\") {\n        // ตัด \\n \\r \\t ทั่วไปออก (ยุบเป็น space)\n        v = v.replace(/[\\n\\r\\t]+/g, \" \");\n\n        // address ให้เป็นบรรทัดเดียว\n        if (k === \"buyer_address_raw\") {\n          v = v.replace(/\\s*\\n\\s*/g, \" \");\n        }\n\n        result[k] = v.trim();\n      } else {\n        // บังคับ cast เป็น string สำหรับ field ที่ไม่ใช่ number\n        result[k] = String(v).trim();\n      }\n    } else {\n      result[k] = null;\n    }\n  }\n\n  // บังคับจำนวนเงินเป็น number หรือ null\n  result.net_amount  = parseAmountToNumber(working.net_amount);\n  result.vat_amount  = parseAmountToNumber(working.vat_amount);\n  result.grand_total = parseAmountToNumber(working.grand_total);\n\n  // default branch: ถ้าไม่มี หรือเป็น string ว่าง → \"สำนักงานใหญ่\"\n  if (!result.vendor_branch) {\n    result.vendor_branch = \"สำนักงานใหญ่\";\n  }\n  if (!result.buyer_branch) {\n    result.buyer_branch = \"สำนักงานใหญ่\";\n  }\n\n  return result;\n}\n\n/* ---------- main ---------- */\n\nfor (let i = 0; i < inputs.length; i++) {\n  const item = inputs[i];\n\n  // ดึง raw text จากโครงสร้าง Gemini (candidates / content / parts)\n  const rawOutput = collectRawText(item.json);\n  const trimmed = (rawOutput ?? \"\").toString().trim();\n\n  // 1) ดึงบล็อกโค้ดแบบ fenced: ```json ...``` หรือ ``` ...```\n  let jsonBlocks = [];\n  const reJson = /```json\\s*([\\s\\S]*?)```/gi;\n  const reAny  = /```(?!json)([\\s\\S]*?)```/gi;\n  let m;\n\n  while ((m = reJson.exec(trimmed)) !== null) jsonBlocks.push(m[1].trim());\n  while ((m = reAny.exec(trimmed))  !== null) jsonBlocks.push(m[1].trim());\n\n  // 2) ถ้าไม่พบ fenced แต่เนื้อทั้งก้อนเป็น JSON ดิบ\n  if (jsonBlocks.length === 0) {\n    const t = trimmed;\n    if ((t.startsWith(\"{\") && t.endsWith(\"}\")) || (t.startsWith(\"[\") && t.endsWith(\"]\"))) {\n      jsonBlocks = [t];\n    }\n  }\n\n  if (jsonBlocks.length === 0) {\n    out.push({\n      json: {\n        error: \"JSON block not found\",\n        raw_output_preview: trimmed.slice(0, 400),\n      },\n      pairedItem: { item: i },\n    });\n    continue;\n  }\n\n  // 3) parse ทุก block ที่เจอ\n  for (const js of jsonBlocks) {\n    try {\n      const parsed = JSON.parse(js);\n\n      if (Array.isArray(parsed)) {\n        // กรณี LLM ส่ง array ของหลายเอกสาร\n        for (const o of parsed) {\n          const coerced = coerceToSchema(o ?? {});\n          out.push({ json: coerced, pairedItem: { item: i } });\n        }\n      } else {\n        const coerced = coerceToSchema(parsed ?? {});\n        out.push({ json: coerced, pairedItem: { item: i } });\n      }\n\n    } catch (e) {\n      out.push({\n        json: {\n          error: \"JSON parse error\",\n          snippet: js.slice(0, 300),\n          message: e.message,\n        },\n        pairedItem: { item: i },\n      });\n    }\n  }\n}\n\nreturn out;\n"
+      },
+      "id": "8e237f5e-06a2-48c5-acca-896642bd83ef",
+      "name": "Parse Gemini Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemsIn = $input.all();\nconst out = [];\n\n// ใช้ normalizeSpaces เหมือนเดิม\nfunction normalizeSpaces(s) {\n  if (s == null) return s;\n  return String(s)\n    .replace(/[\\u200B\\u200C\\u200D\\u2060]/g, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\n/** ดึงหัวเอกสารที่ “น่าจะเป็น” ชื่อเรื่องจริงจาก candidates */\nfunction inferDocTitle(candidates) {\n  const titles = candidates\n    .map(v => normalizeSpaces(String(v)))\n    .filter(Boolean);\n\n  // เรียงลำดับความสำคัญของชื่อเรื่องที่พบบ่อย\n  const ORDERED_PATTERNS = [\n    /ใบกำกับภาษีอย่างย่อ/i,\n    /สำเนา\\s*ใบกำกับภาษี/i,\n    /ใบกำกับภาษี/i,\n    /ใบเสร็จรับเงิน/i,\n  ];\n\n  for (const pat of ORDERED_PATTERNS) {\n    const hit = titles.find(t => pat.test(t));\n    if (hit) return hit;\n  }\n  // ถ้าไม่เจอ pattern ใดๆ ให้คืนค่าผู้สมัครตัวแรกเพื่อแสดง trace\n  return titles[0] ?? null;\n}\n\n/**\n * ตรวจประเภทเอกสารว่าเป็น \"ใบกำกับภาษี\" ที่ใช้ได้ไหม (full vat invoice)\n * กติกา:\n * - มี \"ใบกำกับภาษี\" และ **ไม่มี** \"อย่างย่อ\" / \"สำเนา\" / \"copy\" ⇒ ใช้ได้\n * - มี \"ใบกำกับภาษีอย่างย่อ\" / \"สำเนาใบกำกับภาษี\" / \"สำเนา\" / \"copy\" / \"ใบเสร็จรับเงิน\" อย่างเดียว ⇒ ไม่ใช้ได้\n */\nfunction detectInvoiceStatus(target) {\n  if (!target || typeof target !== \"object\") return target;\n\n  const candidates = [\n    target.document_type,\n    target.doc_type,\n    target.doc_title,\n    target.title,\n    target.header,\n    target.header_title,\n  ].filter(v => v != null && v !== \"\");\n\n  if (candidates.length === 0) {\n    // ไม่มีข้อมูลชื่อเอกสารให้ตรวจ\n    target.has_invoice = false;\n    target.invoice_reason = \"ไม่พบหัวเอกสาร (doc title)\";\n    return target;\n  }\n\n  const combinedNorm = normalizeSpaces(\n    candidates.map(v => String(v)).join(\" \")\n  );\n  const combined = combinedNorm.toLowerCase();\n\n  // ช่วยระบุหัวเอกสารที่เจอจริงๆ (ไม่ทับของเดิม)\n  const inferred = inferDocTitle(candidates);\n  if (!target.doc_title && inferred) {\n    target.doc_title_inferred = inferred; // เก็บไว้เป็นหลักฐาน ไม่ไปแก้ doc_title เดิม\n  }\n\n  // สัญญาณ “ไม่ใช้ได้”\n  const isShort = /ใบกำกับภาษีอย่างย่อ/.test(combined);\n  const isCopy  = /(สำเนา\\s*ใบกำกับภาษี|^|\\s)สำเนa?(\\s|$)|\\bcopy\\b/.test(combined); // ครอบคลุม \"สำเนาใบกำกับภาษี\", \"สำเนา\", \"copy\"\n  const isReceiptOnly = /ใบเสร็จรับเงิน/.test(combined) && !/ใบกำกับภาษี/.test(combined);\n\n  // สัญญาณ “เป็นใบกำกับ”\n  const hasvatInvoiceWord = /ใบกำกับภาษี/.test(combined) || /vat\\s*invoice/i.test(combined);\n\n  const hasInvoice = hasvatInvoiceWord && !(isShort || isCopy || isReceiptOnly);\n  target.has_invoice = hasInvoice;\n\n  if (!hasInvoice) {\n    if (isShort) {\n      target.invoice_reason = \"เป็น 'ใบกำกับภาษีอย่างย่อ'\";\n    } else if (isCopy) {\n      target.invoice_reason = \"เป็น 'สำเนา' หรือ 'copy'\";\n    } else if (isReceiptOnly) {\n      target.invoice_reason = \"เป็น 'ใบเสร็จรับเงิน' ไม่ใช่ใบกำกับภาษี\";\n    } else if (!hasvatInvoiceWord) {\n      target.invoice_reason = \"ไม่พบคำว่า 'ใบกำกับภาษี'/'vat Invoice'\";\n    } else {\n      target.invoice_reason = \"มีสัญญาณไม่ครบสำหรับใบกำกับภาษีเต็มรูป\";\n    }\n  } else {\n    target.invoice_reason = \"\";\n  }\n\n  return target;\n}\n\n/* ---------- main ---------- */\nfor (const it of itemsIn) {\n  const obj = { ...it.json };\n  detectInvoiceStatus(obj);\n  out.push({ json: obj, pairedItem: it.pairedItem });\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        704
+      ],
+      "id": "41ff6007-08e1-4f36-8e83-74374de799e4",
+      "name": "Detect Invoice Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code Node: Validate VAT amounts (TH) — improved\n\n// ===== helpers =====\nconst THAI_DIGITS = \"๐๑๒๓๔๕๖๗๘๙\";\nfunction toWesternDigits(s){ return String(s ?? \"\").replace(/[๐-๙]/g, d => String(THAI_DIGITS.indexOf(d))); }\nfunction parseAmount(val){\n  if (val === null || val === undefined || val === \"\") return null;\n  let s = toWesternDigits(String(val)).trim();\n  let neg = false;\n  if (/^\\(.*\\)$/.test(s)) { neg = true; s = s.slice(1, -1); }\n  s = s.replace(/,/g,\"\").replace(/[^\\d.\\-]/g,\"\");\n  if (!s) return null;\n  const n = Number(s);\n  if (Number.isNaN(n)) return null;\n  return neg ? -n : n;\n}\nfunction toCents(n){ return n==null ? null : Math.round((Number(n)+1e-10)*100); }\nfunction fromCents(c){ return c==null ? null : Number((c/100).toFixed(2)); }\n\nfunction validateOne(j){\n  // อัตรา VAT และ tolerance (สตางค์)\n  const rate = parseAmount(j.vat_rate) ?? 0.07;\n  const tol  = Number.isFinite(Number(j.tolerance_cents)) ? Number(j.tolerance_cents) : 1; // 1 = 0.01\n  const isInclusiveHint = (typeof j.is_inclusive === \"boolean\") ? j.is_inclusive : null;\n\n  const netC   = toCents(parseAmount(j.net_amount));\n  const vatC   = toCents(parseAmount(j.vat_amount));\n  const totalC = toCents(parseAmount(j.grand_total));\n\n  const out = {\n    amount_ok: false,\n    amount_mode: null,           // \"exclusive\" | \"inclusive\"\n    amount_reason: \"\",\n    vat_rate_used: rate,\n    tolerance_cents_used: tol,\n    // ค่าที่คำนวณแนะนำ\n    fix_suggestion: { net_amount: null, vat_amount: null, grand_total: null },\n    net_amount_fixed: null,\n    vat_amount_fixed: null,\n    grand_total_fixed: null,\n  };\n\n  // เทียบค่าภายใน tolerance\n  const near = (a,b) => (a!=null && b!=null && Math.abs(a-b) <= tol);\n\n  // ---- exclusive (net เป็นฐาน) ----\n  let ex_netC=null, ex_vatC=null, ex_totalC=null;\n  if (netC!=null) {\n    ex_netC = netC;\n    ex_vatC = Math.round(netC * Number(rate));\n    ex_totalC = ex_netC + ex_vatC;\n  } else if (totalC!=null && vatC!=null) {\n    ex_netC = totalC - vatC;\n    ex_vatC = vatC;\n    ex_totalC = totalC;\n  }\n\n  // ---- inclusive (total รวม VAT) ----\n  let in_netC=null, in_vatC=null, in_totalC=null;\n  if (totalC!=null) {\n    in_totalC = totalC;\n    in_netC   = Math.round(totalC / (1 + Number(rate)));\n    in_vatC   = in_totalC - in_netC;\n  } else if (netC!=null && vatC!=null) {\n    in_totalC = netC + vatC;\n    in_netC   = netC;   // ใช้เพื่อเทียบกรณีไม่มี total\n    in_vatC   = vatC;\n  }\n\n  const candidates = [];\n  if (ex_totalC!=null) candidates.push({mode:\"exclusive\", netC:ex_netC, vatC:ex_vatC, totalC:ex_totalC});\n  if (in_totalC!=null) candidates.push({mode:\"inclusive\", netC:in_netC, vatC:in_vatC, totalC:in_totalC});\n\n  if (candidates.length === 0) {\n    out.amount_reason = \"ข้อมูลไม่พอคำนวณ (ต้องมี net หรือ total อย่างน้อย)\";\n    return out;\n  }\n\n  // ให้คะแนน + bias จาก is_inclusive หากผู้ใช้ส่ง hint มา\n  let best = null, bestScore = -1, bestDiff = \"\";\n  for (const c of candidates) {\n    let score = 0;\n    if (netC   == null || near(c.netC,   netC))   score++;\n    if (vatC   == null || near(c.vatC,   vatC))   score++;\n    if (totalC == null || near(c.totalC, totalC)) score++;\n\n    // bias ตาม hint\n    if (isInclusiveHint === true  && c.mode === \"inclusive\") score += 0.5;\n    if (isInclusiveHint === false && c.mode === \"exclusive\") score += 0.5;\n\n    const diffs = [];\n    if (netC   != null && !near(c.netC,   netC))   diffs.push(`net: expected ${fromCents(c.netC)} ≠ given ${fromCents(netC)}`);\n    if (vatC   != null && !near(c.vatC,   vatC))   diffs.push(`vat: expected ${fromCents(c.vatC)} ≠ given ${fromCents(vatC)}`);\n    if (totalC != null && !near(c.totalC, totalC)) diffs.push(`total: expected ${fromCents(c.totalC)} ≠ given ${fromCents(totalC)}`);\n\n    if (score > bestScore) { bestScore = score; best = c; bestDiff = diffs.join(\"; \"); }\n  }\n\n  // สรุปผล\n  const allGivenOk =\n    (netC   == null || near(best.netC,   netC)) &&\n    (vatC   == null || near(best.vatC,   vatC)) &&\n    (totalC == null || near(best.totalC, totalC));\n\n  out.amount_ok = allGivenOk;\n  out.amount_mode = best.mode;\n  out.fix_suggestion = {\n    net_amount: fromCents(best.netC),\n    vat_amount: fromCents(best.vatC),\n    grand_total: fromCents(best.totalC),\n  };\n  out.amount_reason = allGivenOk ? \"\" : (bestDiff || \"ค่าที่ให้มาไม่สอดคล้องตามอัตราภาษี\");\n  out.net_amount_fixed   = out.fix_suggestion.net_amount;\n  out.vat_amount_fixed   = out.fix_suggestion.vat_amount;\n  out.grand_total_fixed  = out.fix_suggestion.grand_total;\n\n  return out;\n}\n\n// ===== main =====\nconst itemsIn = $input.all();\nconst out = [];\nfor (const it of itemsIn) {\n  const j = { ...(it.json || {}) };\n  const v = validateOne(j);\n\n  out.push({\n    json: {\n      ...j,\n      amount_ok: v.amount_ok,\n      amount_mode: v.amount_mode,\n      amount_reason: v.amount_reason,\n      vat_rate_used: v.vat_rate_used,\n      tolerance_cents_used: v.tolerance_cents_used,\n      net_amount_fixed: v.net_amount_fixed,\n      vat_amount_fixed: v.vat_amount_fixed,\n      grand_total_fixed: v.grand_total_fixed\n    },\n    pairedItem: it.pairedItem\n  });\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        704
+      ],
+      "id": "b4e3ee89-476c-4020-96a2-a04ecde7fad2",
+      "name": "Validate Amounts"
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemsIn = $input.all();\nconst out = [];\n\n/* ========= helpers ========= */\n\n// แปลงเลขไทย → อารบิก\nconst THAI_DIGITS = \"๐๑๒๓๔๕๖๗๘๙\";\nfunction toWesternDigits(str) {\n  if (!str) return str;\n  return String(str).replace(/[๐-๙]/g, d => String(THAI_DIGITS.indexOf(d)));\n}\nfunction onlyDigits(s){ return String(s ?? \"\").replace(/\\D/g, \"\"); }\n\n// เดือนภาษาไทย → ตัวเลข\nconst THAI_MONTHS = {\n  \"มกราคม\": \"01\", \"กุมภาพันธ์\": \"02\", \"มีนาคม\": \"03\", \"เมษายน\": \"04\",\n  \"พฤษภาคม\": \"05\", \"มิถุนายน\": \"06\", \"กรกฎาคม\": \"07\", \"สิงหาคม\": \"08\",\n  \"กันยายน\": \"09\", \"ตุลาคม\": \"10\", \"พฤศจิกายน\": \"11\", \"ธันวาคม\": \"12\",\n};\n\n// ตัด white-space แปลก ๆ และยุบช่องว่าง\nfunction normalizeSpaces(s) {\n  if (s == null) return s;\n  return String(s)\n    .replace(/[\\u200B\\u200C\\u200D\\u2060]/g, \"\") // zero-width\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\n// ตัดช่องว่างรอบ . - / ( )\nfunction stripSpacesAroundPunct(s) {\n  if (s == null) return s;\n  return String(s).replace(/\\s*([.\\-\\/()])\\s*/g, \"$1\");\n}\n\n/** ✅ normalize วันที่ → dd/mm/yyyy (เพื่อการเปรียบเทียบ) */\nfunction normalizeDateRaw(input) {\n  if (!input) return input;\n  let s = toWesternDigits(String(input)).trim();\n\n  // 1) dd/mm/yyyy หรือ dd-mm-yyyy\n  let m = s.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})$/);\n  if (m) {\n    let [_, d, mth, y] = m;\n    let year = parseInt(y, 10);\n    if (year > 2400) year -= 543;\n    const day = d.padStart(2, \"0\");\n    const mon = mth.padStart(2, \"0\");\n    return `${day}/${mon}/${year}`;\n  }\n\n  // 2) yyyy-mm-dd\n  m = s.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})$/);\n  if (m) {\n    let [_, y, mth, d] = m;\n    let year = parseInt(y, 10);\n    if (year > 2400) year -= 543;\n    const day = String(d).padStart(2, \"0\");\n    const mon = String(mth).padStart(2, \"0\");\n    return `${day}/${mon}/${year}`;\n  }\n\n  // 3) 1 สิงหาคม 2568\n  m = s.match(/(\\d{1,2})\\s*(\\S+)\\s*(\\d{4})/);\n  if (m) {\n    let [_, dayStr, monthThai, yearThai] = m;\n    const mon = THAI_MONTHS[monthThai];\n    if (mon) {\n      let year = parseInt(yearThai, 10);\n      if (year > 2400) year -= 543;\n      const d = dayStr.padStart(2, \"0\");\n      return `${d}/${mon}/${year}`;\n    }\n  }\n\n  return s; // รูปแบบอื่นๆ คืนค่าเดิม (หลังแปลงเลขไทย)\n}\n\n/** ✅ normalize รหัสสาขา → \"00000\" หรือเลข 5 หลัก (ใช้ได้ทั้ง vendor/buyer) */\nfunction normalizeBranch(value) {\n  if (!value) return \"00000\";\n  let s = normalizeSpaces(String(value));\n\n  if (/สำนักงานใหญ่/.test(s) || /Head\\s*Office/i.test(s)) return \"00000\";\n\n  // \"สาขา 3\" / \"branch 12\"\n  let m = s.match(/(สาขา|branch)[^\\d]{0,10}(\\d{1,5})/i);\n  if (m) return String(m[2]).padStart(5, \"0\");\n\n  // เก็บเฉพาะตัวเลขท้าย 5 ตำแหน่ง\n  const digits = onlyDigits(toWesternDigits(s));\n  if (digits) return digits.slice(-5).padStart(5, \"0\");\n\n  return \"00000\";\n}\n\n/** ✅ normalize ชื่อ (ไทย) — เก็บเนื้อหาเดิม, แค่จัดช่องว่าง/วงเล็บ */\nfunction normalizeThaiName(name) {\n  if (!name) return name;\n  let s = normalizeSpaces(String(name));\n  s = stripSpacesAroundPunct(s);\n  return s;\n}\n\n/** ✅ normalize เลขผู้เสียภาษี (ไทย→อารบิก + เอาเฉพาะตัวเลข) */\nfunction normalizevatId(vatId){\n  if (vatId == null) return vatId;\n  const digits = onlyDigits(toWesternDigits(vatId));\n  return digits || null;\n}\n\n/** ใช้ normalize แบบ field-specific (รองรับ vendor/buyer/*) */\nfunction normalizeByField(field, value) {\n  switch (field) {\n    case \"date_raw\":\n    case \"date\":\n    case \"invoice_date\":\n      return normalizeDateRaw(value);\n\n    case \"vendor_branch\":\n    case \"buyer_branch\":\n      return normalizeBranch(value);\n\n    case \"vendor_name\":\n    case \"buyer_name\":\n      return normalizeThaiName(value);\n\n    case \"vendor_vat_id\":\n    case \"buyer_vat_id\":\n      return normalizevatId(value);\n\n    default:\n      return value;\n  }\n}\n\n/** ✅ normalize อ็อบเจกต์เอกสาร (single) */\nfunction normalizeInvoiceObject(target) {\n  if (!target || typeof target !== \"object\") return target;\n\n  // วันที่\n  if (target.date_raw) {\n    target.date_raw = normalizeDateRaw(target.date_raw);\n  }\n\n  // ผู้ขาย\n  target.vendor_branch = normalizeBranch(target.vendor_branch);\n  if (target.vendor_name) target.vendor_name = normalizeThaiName(target.vendor_name);\n  if (target.vendor_vat_id != null) target.vendor_vat_id = normalizevatId(target.vendor_vat_id);\n\n  // ผู้ซื้อ (ใหม่)\n  if (target.buyer_name) target.buyer_name = normalizeThaiName(target.buyer_name);\n  if (target.buyer_vat_id != null) target.buyer_vat_id = normalizevatId(target.buyer_vat_id);\n  if (target.buyer_branch != null) target.buyer_branch = normalizeBranch(target.buyer_branch);\n\n  // หมายเหตุ: buyer_address_raw — เก็บตามต้นฉบับเพื่อ audit/diff จงใจ \"ไม่ปรับแต่ง\"\n  // ถ้าต้องการแค่ลบ zero-width/ช่องว่างซ้อน ให้อันคอมเมนต์บรรทัดด้านล่าง:\n  // if (target.buyer_address_raw) target.buyer_address_raw = normalizeSpaces(target.buyer_address_raw);\n\n  return target;\n}\n\n/** ✅ normalize diffs: ใช้ field เป็นตัวชี้ว่าจะ normalize แบบไหน */\nfunction normalizeDiffsArray(diffsArr) {\n  if (!Array.isArray(diffsArr)) return diffsArr;\n  for (const d of diffsArr) {\n    const field = d?.field;\n    if (!field) continue;\n    if (d.hasOwnProperty(\"excel\")) d.excel = normalizeByField(field, d.excel);\n    if (d.hasOwnProperty(\"pdf\"))   d.pdf   = normalizeByField(field, d.pdf);\n  }\n  return diffsArr;\n}\n\n/* ========= main ========= */\nfor (const it of itemsIn) {\n  const obj = { ...it.json };\n\n  if (Array.isArray(obj.diffs)) {\n    obj.diffs = normalizeDiffsArray(obj.diffs);\n  } else {\n    normalizeInvoiceObject(obj);\n  }\n\n  out.push({ json: obj, pairedItem: it.pairedItem });\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1616,
+        704
+      ],
+      "id": "46f72b4c-09bc-4a79-8fbd-2407c58773f3",
+      "name": "Normalize Extracted Data"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d6c0327d-aa68-4ff4-b5ef-c701a6fa1572",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -2336,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "N8GVxqE9wUbxjInn",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/N8GVxqE9wUbxjInn",
+          "cachedResultName": "logic"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -928,
+        880
+      ],
+      "id": "dae4284d-2552-4497-9f1a-ddba73cc2db0",
+      "name": "Call 'logic'"
+    }
+  ],
+  "connections": {
+    "Merge Input": {
+      "main": [
+        [
+          {
+            "node": "Call 'logic'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Chat": {
+      "main": [
+        [
+          {
+            "node": "Parse Gemini Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Document (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "Gemini Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini Output": {
+      "main": [
+        [
+          {
+            "node": "Normalize Extracted Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Invoice Type": {
+      "main": [
+        [
+          {
+            "node": "Validate Amounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Amounts": {
+      "main": [
+        [
+          {
+            "node": "Merge Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Extracted Data": {
+      "main": [
+        [
+          {
+            "node": "Detect Invoice Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Analyze Document (Gemini)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Input",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "10616c95-bd5d-4767-aa99-d60876f2ffb5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e25b4f0a8e6c0a7984427a0067c1260671f4803f14e4886f5e01dffd5ca1629c"
+  },
+  "id": "WKlvPCyp9aKNMs7j",
+  "tags": []
+}

@@ -1,5 +1,5 @@
 {
-  "name": "logic",
+  "name": "Invoice Processing Logic",
   "nodes": [
     {
       "parameters": {
@@ -2479,7 +2479,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "When Executed by Another Workflow": {
       "main": [
